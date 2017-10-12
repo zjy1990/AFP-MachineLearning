@@ -3,19 +3,17 @@ import pandas as pd
 import numpy as np
 
 #params
-batchSize = 30
-iterations = 100
-numClass = 3
-lstm_size = ?
+num_batch = 4
+batch_size = 10
+time_step = 5
+lstm_size = 64
+dataset = tf.placeholder(tf.float32,[num_batch,batch_size,num_feature])
+lstm = tf.nn.rnn_cell.BasicLSTMCell(lstm_size)
 
-def getTrainBatch():
-    batch = data[]
+hidden_state = tf.zeros([batch_size,lstm.state_size])
+current_state = tf.zeros([batch_size,lstm.state_size])
+state = hidden_state,current_state
+probabilities = []
 
-def getTestBatch():
-
-labels = tf.placeholder(tf.float32,[batchSize,numClass])
-input_data = tf.placeholder(tf.float32,[batchSize,])
-
-lstmCell = tf.nn.rnn_cell.BasicLSTMCell(lstm_size)
-weight = tf.Variable(tf.truncated_normal([lstm_size,numClass]))
-
+loss = 0.0
+for current_batch in dataset
