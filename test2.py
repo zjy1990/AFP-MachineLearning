@@ -119,7 +119,6 @@ def dynamicRNN(x, seqlen, weights, biases):
 
     # Unstack to get a list of 'n_steps' tensors of shape (batch_size, n_input)
     x = tf.unstack(x, seq_max_len, 1)
-
     # Define a lstm cell with tensorflow
     lstm_cell = tf.contrib.rnn.BasicLSTMCell(n_hidden)
 
@@ -127,7 +126,6 @@ def dynamicRNN(x, seqlen, weights, biases):
     # calculation.
     outputs, states = tf.contrib.rnn.static_rnn(lstm_cell, x, dtype=tf.float32,
                                                 sequence_length=seqlen)
-
     # When performing dynamic calculation, we must retrieve the last
     # dynamically computed output, i.e., if a sequence length is 10, we need
     # to retrieve the 10th output.
@@ -139,14 +137,12 @@ def dynamicRNN(x, seqlen, weights, biases):
     # and change back dimension to [batch_size, n_step, n_input]
     outputs = tf.stack(outputs)
     outputs = tf.transpose(outputs, [1, 0, 2])
-
     # Hack to build the indexing and retrieve the right output.
     batch_size = tf.shape(outputs)[0]
     # Start indices for each sample
     index = tf.range(0, batch_size) * seq_max_len + (seqlen - 1)
     # Indexing
     outputs = tf.gather(tf.reshape(outputs, [-1, n_hidden]), index)
-
     # Linear activation, using outputs computed above
     return tf.matmul(outputs, weights['out']) + biases['out']
 
@@ -188,6 +184,6 @@ with tf.Session() as sess:
     test_data = testset.data
     test_label = testset.labels
     test_seqlen = testset.seqlen
-    print("Testing Accuracy:", \
+    print("Testing Accuracy:",
           sess.run(accuracy, feed_dict={x: test_data, y: test_label,
                                         seqlen: test_seqlen}))
