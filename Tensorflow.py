@@ -4,18 +4,20 @@ import pandas as pd
 import numpy as np
 
 #params
-batch_size = 30
-num_per_batch = 10
+batch_size = 100
+num_per_batch = 20
 num_class = 2
-lstm_size = 128
-num_iteration = 100
-
+lstm_size = 64
+num_iteration = 1000
+display_step = 100
 #fake data
-stock_data = pd.DataFrame(data=np.random.randn(batch_size*num_iteration, num_per_batch)*0.1)
+
+stock_data = (np.random.randn(batch_size*num_iteration, num_per_batch,1)*0.1).tolist()
 labels_data = pd.DataFrame(data=np.zeros((batch_size*num_iteration,num_class)))
-labels_data.loc[:,0] = np.int_(stock_data.loc[:,0]>=0)
-labels_data.loc[:,1] = np.int_(stock_data.loc[:,0]<0)
-stock_data = stock_data.values.tolist()
+predict_stock_data = pd.DataFrame(np.random.randn(batch_size*num_iteration,1))
+labels_data.loc[:,0] = np.int_(predict_stock_data.loc[:,0]>=0)
+labels_data.loc[:,1] = np.int_(predict_stock_data.loc[:,0]<0)
+
 
 weight = tf.Variable(tf.truncated_normal([lstm_size,num_class]))
 bias = tf.Variable(tf.constant(0.1,shape=[num_class]))
@@ -48,8 +50,8 @@ prediction = LSTM(input_data,weight,bias)
 
 
 
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction,labels = labels))
-optimizer = tf.train.AdamOptimizer(1e-4).minimize(loss)
+cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction,labels = labels))
+optimizer = tf.train.AdamOptimizer(1e-4).minimize(cost)
 correct_prediction = tf.equal(tf.argmax(prediction,1),tf.argmax(labels,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
 
@@ -69,8 +71,16 @@ with tf.Session() as sess:
     # writer.add_graph(sess.graph)
 
 #run model
-    for i in range(num_iteration):
-        nextBatch = stock_data[i*batch_size:(i+1)*batch_size-1]
-        nextBatchLabels = labels_data.loc[i*batch_size:(i+1)*batch_size-1,]
-        nextBatch = tf.unstack(nextBatch)
+    for step in range(num_iteration):
+        nextBatch = stock_data[step*batch_size:(step+1)*batch_size]
+        nextBatchLabels = labels_data.loc[step*batch_size:(step+1)*batch_size-1,]
+        #nextBatch = tf.unstack(nextBatch)
         sess.run(optimizer,feed_dict= {input_data: nextBatch,labels: nextBatchLabels})
+        if step % display_step == 0 or step == 1:
+            # Calculate batch accuracy & loss
+            acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextBatch, labels: nextBatchLabels})
+            print("Step " + str(step * batch_size) + ", Minibatch Loss= " + \
+                  "{:.6f}".format(loss) + ", Training Accuracy= " + \
+                  "{:.5f}".format(acc))
+
+    print("Optimization Finished!")
