@@ -21,6 +21,7 @@ labels_data.loc[:,1] = np.int_(predict_stock_data.loc[:,0]<0)
 
 weight = tf.Variable(tf.truncated_normal([lstm_size,num_class]))
 bias = tf.Variable(tf.constant(0.1,shape=[num_class]))
+
 labels = tf.placeholder(tf.float32,[batch_size,num_class])
 input_data = tf.placeholder(tf.float32,[batch_size,num_per_batch,1])
 
