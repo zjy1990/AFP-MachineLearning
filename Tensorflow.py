@@ -7,22 +7,25 @@ import pandas as pd
 
 
 #params
-batch_size = 500
+batch_size = 100
 num_per_batch = 7
-num_class = 3
+num_class = 2
 lstm_size = 64
-num_iteration = 10000
-display_step = 500
+num_iteration = 5000
+display_step = 200
 
 #function to select batch data for random draw
 def getTrainingBatch_random(batch_size, traindata):
     maxNumber = traindata.shape[0]
     batchIndex = np.random.randint(0, maxNumber, batch_size)
-    trainBatch = traindata.loc[batchIndex, :]
+    trainBatch = traindata.iloc[batchIndex, :]
     trainLabel = pd.DataFrame(data=np.zeros((batch_size, num_class)))
-    trainLabel.loc[:, 0] = np.int_(trainBatch.loc[:, '^GSPC'] >= 0.005)
-    trainLabel.loc[:, 1] = np.int_((trainBatch.loc[:, '^GSPC'] < 0.005) & (trainBatch.loc[:, '^GSPC'] >= -0.005 ))
-    trainLabel.loc[:, 2] = np.int_(trainBatch.loc[:, '^GSPC'] < -0.005)
+    # trainLabel.loc[:, 0] = np.int_(trainBatch.loc[:, '^GSPC'] >= 0.005)
+    # trainLabel.loc[:, 1] = np.int_((trainBatch.loc[:, '^GSPC'] < 0.005) & (trainBatch.loc[:, '^GSPC'] >= -0.005 ))
+    # trainLabel.loc[:, 2] = np.int_(trainBatch.loc[:, '^GSPC'] < -0.005)
+    trainLabel.loc[:, 0] = np.int_(trainBatch.loc[:, '^GSPC'] >= 0)
+    trainLabel.loc[:, 1] = np.int_(trainBatch.loc[:, '^GSPC'] < 0)
+
     trainBatch = trainBatch.iloc[:, 2:trainBatch.shape[1]]
     trainBatch = np.array(trainBatch)
     trainBatch = np.reshape(trainBatch,(batch_size,num_per_batch,1)).tolist()
@@ -55,8 +58,8 @@ def getTrainingBatch_timeseries(batch_size, traindata):
 
 #real data
 rawdata = pd.read_csv('/Users/Jeremy/Desktop/IDX.csv',sep = ',')
-train_data = rawdata.iloc[0:4200,:]
-test_data = rawdata.iloc[4200:rawdata.shape[0],:]
+train_data = rawdata.iloc[0:4000,:]
+test_data = rawdata.iloc[4000:rawdata.shape[0],:]
 
 
 #define weight and bias
@@ -112,6 +115,19 @@ with tf.Session() as sess:
                   "{:.5f}".format(acc))
 
     print("Optimization Finished!")
+
+    for step in range(1000):
+        nextBatch,nextBatchLabels = getTrainingBatch_random(batch_size,test_data)
+        #nextBatch = tf.unstack(nextBatch)
+        sess.run(optimizer,feed_dict= {input_data: nextBatch,labels: nextBatchLabels})
+        if step % display_step == 0 or step == 1:#report summary
+            # Calculate batch accuracy & loss
+            acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextBatch, labels: nextBatchLabels})
+            print("Step " + str(step * batch_size) + ", Minibatch Loss= " + \
+                  "{:.6f}".format(loss) + ", Training Accuracy= " + \
+                  "{:.5f}".format(acc))
+
+    print("Testing Finished!")
 
 #run model random time series
     # for step in range(num_iteration):
