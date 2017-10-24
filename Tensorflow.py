@@ -6,20 +6,32 @@ import pandas as pd
 
 
 
-
 #params
 batch_size = 500
 num_per_batch = 7
-num_class = 2
+num_class = 3
 lstm_size = 64
 num_iteration = 10000
 display_step = 500
 
-#function to select batch data
-def getTrainingBatch(batch_size):
-    maxNumber = stock_data.shape[0]
+#function to select batch data for random draw
+def getTrainingBatch_random(batch_size, traindata):
+    maxNumber = traindata.shape[0]
     batchIndex = np.random.randint(0, maxNumber, batch_size)
-    trainBatch = stock_data.loc[batchIndex, :]
+    trainBatch = traindata.loc[batchIndex, :]
+    trainLabel = pd.DataFrame(data=np.zeros((batch_size, num_class)))
+    trainLabel.loc[:, 0] = np.int_(trainBatch.loc[:, '^GSPC'] >= 0.005)
+    trainLabel.loc[:, 1] = np.int_((trainBatch.loc[:, '^GSPC'] < 0.005) & (trainBatch.loc[:, '^GSPC'] >= -0.005 ))
+    trainLabel.loc[:, 2] = np.int_(trainBatch.loc[:, '^GSPC'] < -0.005)
+    trainBatch = trainBatch.iloc[:, 2:trainBatch.shape[1]]
+    trainBatch = np.array(trainBatch)
+    trainBatch = np.reshape(trainBatch,(batch_size,num_per_batch,1)).tolist()
+    return(trainBatch,trainLabel)
+
+
+#function to select batch data for random draw
+def getTrainingBatch_timeseries(batch_size, traindata):
+    trainBatch = traindata
     trainLabel = pd.DataFrame(data=np.zeros((batch_size, num_class)))
     trainLabel.loc[:, 0] = np.int_(trainBatch.loc[:, '^GSPC'] >= 0)
     trainLabel.loc[:, 1] = np.int_(trainBatch.loc[:, '^GSPC'] < 0)
@@ -27,6 +39,10 @@ def getTrainingBatch(batch_size):
     trainBatch = np.array(trainBatch)
     trainBatch = np.reshape(trainBatch,(batch_size,num_per_batch,1)).tolist()
     return(trainBatch,trainLabel)
+
+
+#get test data
+
 
 
 ##get training and testing batch
@@ -38,7 +54,9 @@ def getTrainingBatch(batch_size):
 # labels_data.loc[:,1] = np.int_(predict_stock_data.loc[:,0]<0)
 
 #real data
-stock_data = pd.read_csv('/Users/peipeidew/Desktop/AFP/LSTM/code/IDX.csv',sep = ',')
+rawdata = pd.read_csv('/Users/Jeremy/Desktop/IDX.csv',sep = ',')
+train_data = rawdata.iloc[0:4200,:]
+test_data = rawdata.iloc[4200:rawdata.shape[0],:]
 
 
 #define weight and bias
@@ -69,7 +87,6 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
 
 init = tf.global_variables_initializer()
 with tf.Session() as sess:
-
     sess.run(init)
     #save summary
     # tf.summary.scalar('Loss',loss)
@@ -81,9 +98,10 @@ with tf.Session() as sess:
     # writer = tf.summary.FileWriter(logdir)
     # writer.add_graph(sess.graph)
 
-#run model
+#run model random draw
+
     for step in range(num_iteration):
-        nextBatch,nextBatchLabels = getTrainingBatch(batch_size)
+        nextBatch,nextBatchLabels = getTrainingBatch_random(batch_size,train_data)
         #nextBatch = tf.unstack(nextBatch)
         sess.run(optimizer,feed_dict= {input_data: nextBatch,labels: nextBatchLabels})
         if step % display_step == 0 or step == 1:#report summary
@@ -94,4 +112,20 @@ with tf.Session() as sess:
                   "{:.5f}".format(acc))
 
     print("Optimization Finished!")
+
+#run model random time series
+    # for step in range(num_iteration):
+    #     traindata = train_data.iloc[step:step+batch_size,:]
+    #     nextBatch,nextBatchLabels = getTrainingBatch_timeseries(batch_size,traindata)
+    #     #nextBatch = tf.unstack(nextBatch)
+    #     sess.run(optimizer,feed_dict= {input_data: nextBatch,labels: nextBatchLabels})
+    #     if step % display_step == 0 or step == 1:#report summary
+    #         # Calculate batch accuracy & loss
+    #         acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextBatch, labels: nextBatchLabels})
+    #         print("Step " + str(step * batch_size) + ", Minibatch Loss= " + \
+    #               "{:.6f}".format(loss) + ", Training Accuracy= " + \
+    #               "{:.5f}".format(acc))
+    #
+    # print("Optimization Finished!")
+
 
