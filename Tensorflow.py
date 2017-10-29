@@ -6,14 +6,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 #import raw data
 #financial
-#train_data = pd.read_csv('/Users/Jeremy/Desktop/fin_stock.csv',sep = ',')
-#test_data = pd.read_csv('/Users/Jeremy/Desktop/test_fin.csv',sep = ',')
+#train_data = pd.read_csv('/Users/Jeremy/Python/AFP/data/fin_stock.csv',sep = ',')
+#test_data = pd.read_csv('/Users/Jeremy/Python/AFP/data/test_fin.csv',sep = ',')
 #Index
-train_data = pd.read_csv('/Users/Jeremy/Desktop/index_data.csv',sep = ',')
-test_data = pd.read_csv('/Users/Jeremy/Desktop/test_index.csv',sep = ',')
+train_data = pd.read_csv('/Users/Jeremy/Python/AFP/data/index_data.csv',sep = ',')
+test_data = pd.read_csv('/Users/Jeremy/Python/AFP/data/test_index.csv',sep = ',')
 #tech firm
-# train_data = pd.read_csv('/Users/Jeremy/Desktop/tech_stock.csv',sep = ',')
-# test_data = pd.read_csv('/Users/Jeremy/Desktop/test_tech.csv',sep = ',')
+# train_data = pd.read_csv('/Users/Jeremy/Python/AFP/data/tech_stock.csv',sep = ',')
+# test_data = pd.read_csv('/Users/Jeremy/Python/AFP/data/test_tech.csv',sep = ',')
 
 #params
 batch_size = 100
@@ -25,7 +25,7 @@ num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
 target_buy = 0.003
-target_sell = -0.003
+target_sell = -0.004
 trans_cost = 0.001
 borrow_rate = 0.0002
 initial_capital = 100
