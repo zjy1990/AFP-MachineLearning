@@ -6,14 +6,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 #import raw data
 #financial
-#train_data = pd.read_csv('/Users/Jeremy/Python/AFP/data/fin_stock.csv',sep = ',')
-#test_data = pd.read_csv('/Users/Jeremy/Python/AFP/data/test_fin.csv',sep = ',')
+#train_data = pd.read_csv('data/fin_stock.csv',sep = ',')
+#test_data = pd.read_csv('data/test_fin.csv',sep = ',')
 #Index
-train_data = pd.read_csv('/Users/Jeremy/Python/AFP/data/index_data.csv',sep = ',')
-test_data = pd.read_csv('/Users/Jeremy/Python/AFP/data/test_index.csv',sep = ',')
+raw_data = pd.read_csv('data/index_data.csv',sep = ',')
+train_data = raw_data.iloc[0:3164,]
+test_data = raw_data.iloc[3165:3382,]
 #tech firm
-# train_data = pd.read_csv('/Users/Jeremy/Python/AFP/data/tech_stock.csv',sep = ',')
-# test_data = pd.read_csv('/Users/Jeremy/Python/AFP/data/test_tech.csv',sep = ',')
+# train_data = pd.read_csv('data/tech_stock.csv',sep = ',')
+# test_data = pd.read_csv('data/test_tech.csv',sep = ',')
 
 #params
 batch_size = 100
