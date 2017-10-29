@@ -5,13 +5,16 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 #import raw data
+
+
 #financial
 #train_data = pd.read_csv('data/fin_stock.csv',sep = ',')
 #test_data = pd.read_csv('data/test_fin.csv',sep = ',')
 #Index
 raw_data = pd.read_csv('data/index_data.csv',sep = ',')
-train_data = raw_data.iloc[0:3164,]
-test_data = raw_data.iloc[3165:3382,]
+
+train_data = raw_data.iloc[0:3598,]
+test_data = raw_data.iloc[3598:3818,]
 #tech firm
 # train_data = pd.read_csv('data/tech_stock.csv',sep = ',')
 # test_data = pd.read_csv('data/test_tech.csv',sep = ',')
@@ -26,13 +29,13 @@ num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
 target_buy = 0.003
-target_sell = -0.004
+target_sell = -0.003
 trans_cost = 0.001
 borrow_rate = 0.0002
 initial_capital = 100
 ptf_value = []
 ptf_value.append(initial_capital)
-
+ptf_ret = []
 
 #function to select batch data for random draw
 def getTrainingBatch_random(batch_size, traindata):
@@ -171,13 +174,22 @@ with tf.Session() as sess:
         date = test_data.iloc[step,0]
         adj_ret,net_position = getReturn(net_position,action,realize_return)
         ptf_value.append(adj_ret*ptf_value[step])
+        ptf_ret.append(adj_ret-1)
         print(str(date) +" " + action +" : Cumulative portfolio value = " + str(ptf_value[step+1]))
 
     print("Testing Finished!")
 
-benchmark = initial_capital*np.cumprod(1+test_data.iloc[:, 1])
-plt.plot(ptf_value)
-plt.plot(benchmark)
-plt.ylabel('Cumulative portfolio value $')
+
+
+benchmark = (initial_capital*np.cumprod(1+test_data.iloc[:, 1])).tolist()
+SR_ptf = np.average(ptf_ret)/np.std(ptf_ret)*np.sqrt(252)
+SR_mkt = np.average(test_data.iloc[:, 1])/np.std(test_data.iloc[:, 1])*np.sqrt(252)
+print("Portfolio sharpe ratio = "+ str(SR_ptf))
+print("Market sharpe ratio = "+ str(SR_mkt))
+plt.plot(ptf_value,'-b',label = 'Portfolio')
+plt.plot(benchmark,'-r',label = 'Benchmark')
+plt.axis([0,250,0,150])
+plt.ylabel('Cumulative portfolio value')
 plt.xlabel('Time')
+plt.legend()
 plt.show()
