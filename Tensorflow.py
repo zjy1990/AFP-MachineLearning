@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 #Index
 raw_data = pd.read_csv('data/index_data.csv',sep = ',')
 
-train_data = raw_data.iloc[0:3598,]
-test_data = raw_data.iloc[3598:3818,]
+train_data = raw_data.iloc[0:4729,]
+test_data = raw_data.iloc[4729:4989,]
 #tech firm
 # train_data = pd.read_csv('data/tech_stock.csv',sep = ',')
 # test_data = pd.read_csv('data/test_tech.csv',sep = ',')
@@ -24,12 +24,12 @@ batch_size = 100
 num_per_batch = train_data.shape[1] - 2
 num_class = 3
 lstm_size = 64
-#num_iteration = 5000
-num_iteration = train_data.shape[0] - batch_size + 1
-display_step = batch_size
+num_iteration = 10000
+#num_iteration = train_data.shape[0] - batch_size + 1
+display_step = batch_size*10
 #strategy params
-target_buy = 0.005
-target_sell = -0.002
+target_buy = 0.003
+target_sell = -0.003
 trans_cost = 0.0005
 borrow_rate = 0.0002
 initial_capital = 100
@@ -144,8 +144,9 @@ with tf.Session() as sess:
 #run model random time series
     print("Optimization Starts!")
     for step in range(num_iteration):
-        traindata = train_data.iloc[step:step+batch_size,:]
-        nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_timeseries(batch_size,traindata)
+        #traindata = train_data.iloc[step:step+batch_size,:]
+        traindata =train_data
+        nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_random(batch_size,traindata)
         #nextBatch = tf.unstack(nextBatch)
         sess.run(optimizer,feed_dict= {input_data: nextTrainBatch,labels: nextTrainBatchLabels})
         if step % display_step == 0:#report summary
@@ -178,6 +179,13 @@ with tf.Session() as sess:
         ptf_value.append(adj_ret*ptf_value[step])
         ptf_ret.append(adj_ret-1)
         print(str(date) +" " + action +" : Cumulative portfolio value = " + str(ptf_value[step+1]))
+
+        if step == test_data.shape[0]-1:#report summary
+            # Calculate batch accuracy & loss
+            acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
+            print("Step " + str(step) + ", Minibatch Loss= " + \
+                  "{:.6f}".format(loss) + ", Training Accuracy= " + \
+                  "{:.5f}".format(acc))
 
     print("Testing Finished!")
 
