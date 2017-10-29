@@ -28,9 +28,9 @@ lstm_size = 64
 num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
-target_buy = 0.003
-target_sell = -0.003
-trans_cost = 0.001
+target_buy = 0.005
+target_sell = -0.002
+trans_cost = 0.0005
 borrow_rate = 0.0002
 initial_capital = 100
 ptf_value = []
@@ -78,7 +78,7 @@ def getTestingBatch_timeseries(batch_size, testdata):
 
     return(testBatch,testLabel,real_return)
 
-def getReturn(net_position,action,realize_return):
+def getReturn(net_position, action, actual_return):
 
     if action == "Buy":
         if net_position == 0:
@@ -88,23 +88,24 @@ def getReturn(net_position,action,realize_return):
         else:
             Tcost = trans_cost*2
         net_position = 1
-        adj_ret = 1 + realize_return - Tcost
+        adj_ret = 1 + actual_return - Tcost
+
     elif action == "Sell":
         if net_position == 0:
             Tcost = trans_cost + borrow_rate
         elif net_position == 1:
             Tcost = 2*trans_cost + borrow_rate
         else:
-            Tcost = 0
+            Tcost = borrow_rate
         net_position = -1
-        adj_ret = 1 - realize_return - Tcost
+        adj_ret = 1 - actual_return - Tcost
     else:
         if net_position == -1:
             Tcost = borrow_rate
-            adj_ret = 1 - realize_return - Tcost
+            adj_ret = 1 - actual_return - Tcost
         else:
             Tcost = 0
-            adj_ret = 1 + realize_return - Tcost
+            adj_ret = 1 + actual_return - Tcost
 
     return(adj_ret,net_position)
 
@@ -165,6 +166,7 @@ with tf.Session() as sess:
         sess.run(optimizer, feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
 
         pred_result = sess.run(prediction_results, feed_dict={input_data: nextTestBatch, labels:nextTestBatchLabels})
+
         if pred_result == 0:
             action = "Buy"
         elif pred_result == 1:
