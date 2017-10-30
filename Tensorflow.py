@@ -4,17 +4,19 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-#import raw data
+#import raw datam
 
 
 #financial
-#train_data = pd.read_csv('data/fin_stock.csv',sep = ',')
-#test_data = pd.read_csv('data/test_fin.csv',sep = ',')
-#Index
-raw_data = pd.read_csv('data/index_data.csv',sep = ',')
+raw_data = pd.read_csv('data/fin_stock.csv',sep = ',')
+train_data = raw_data.iloc[0:1511,]
+test_data = raw_data.iloc[1481:1761,]
 
-train_data = raw_data.iloc[0:4729,]
-test_data = raw_data.iloc[4729:4989,]
+#Index
+# raw_data = pd.read_csv('data/index_data.csv',sep = ',')
+#
+# train_data = raw_data.iloc[0:6501,]
+# test_data = raw_data.iloc[6471:6761,]
 #tech firm
 # train_data = pd.read_csv('data/tech_stock.csv',sep = ',')
 # test_data = pd.read_csv('data/test_tech.csv',sep = ',')
@@ -25,13 +27,13 @@ num_per_batch = train_data.shape[1] - 2
 num_of_days = 30
 num_class = 3
 lstm_size = 64
-num_iteration = 2000
+num_iteration = 5000
 #num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
-target_buy = 0.002
-target_sell = -0.003
-trans_cost = 0.0005
+target_buy = 0.005
+target_sell = -0.008
+trans_cost = 0.001
 borrow_rate = 0.0002
 initial_capital = 100
 ptf_value = []
@@ -48,7 +50,7 @@ def getTrainingBatch_random(batch_size, traindata):
     for i in range(len(batchIndex)):
         trainBatch[i,] = (traindata.iloc[batchIndex[i]:(batchIndex[i]+num_of_days),2:traindata.shape[1]]).transpose()
         trainLabel.loc[i, 0] = np.int(traindata.iloc[(batchIndex[i]+num_of_days+1), 1] >= target_buy)
-        trainLabel.loc[i, 1] = np.int((traindata.iloc[(batchIndex[i]+num_of_days+1), 1] < target_buy) & (traindata.iloc[(batchIndex[i]+num_per_batch+1), 1] >= target_sell))
+        trainLabel.loc[i, 1] = np.int((traindata.iloc[(batchIndex[i]+num_of_days+1), 1] < target_buy) & (traindata.iloc[(batchIndex[i]+num_of_days+1), 1] >= target_sell))
         trainLabel.loc[i, 2] = np.int(traindata.iloc[(batchIndex[i]+num_of_days+1), 1] < target_sell)
 
     trainBatch = trainBatch.tolist()
@@ -96,9 +98,11 @@ def getReturn(net_position, action, actual_return):
         if net_position == -1:
             Tcost = borrow_rate
             adj_ret = 1 - actual_return - Tcost
-        else:
+        elif net_position == 1:
             Tcost = 0
             adj_ret = 1 + actual_return - Tcost
+        else:
+            adj_ret = 1
 
     return(adj_ret,net_position)
 
@@ -123,7 +127,7 @@ def LSTM(input_data,weight,bias):
 prediction = LSTM(input_data,weight,bias)
 #define cost
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction,labels = labels))
-optimizer = tf.train.AdamOptimizer(1e-5).minimize(cost)
+optimizer = tf.train.AdamOptimizer(1e-4).minimize(cost)
 correct_prediction = tf.equal(tf.argmax(prediction,1),tf.argmax(labels,1))
 prediction_results = tf.argmax(prediction,1)[0]
 accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
