@@ -25,11 +25,11 @@ num_per_batch = train_data.shape[1] - 2
 num_of_days = 30
 num_class = 3
 lstm_size = 64
-num_iteration = 5000
+num_iteration = 2000
 #num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
-target_buy = 0.003
+target_buy = 0.002
 target_sell = -0.003
 trans_cost = 0.0005
 borrow_rate = 0.0002
@@ -40,29 +40,29 @@ ptf_ret = []
 
 #function to select batch data for random draw
 def getTrainingBatch_random(batch_size, traindata):
-    maxNumber = traindata.shape[0]-num_per_batch-1
+    maxNumber = traindata.shape[0]-num_of_days-1
     batchIndex = np.random.randint(0, maxNumber, batch_size)
     trainBatch = np.ndarray((batch_size, num_per_batch, num_of_days))
     trainLabel = pd.DataFrame(data=np.zeros((batch_size, num_class)))
 
     for i in range(len(batchIndex)):
-        trainBatch[i,] = traindata.iloc[batchIndex[i]:(batchIndex[i]+num_per_batch),2:traindata.shape[1]]
-        trainLabel.loc[i, 0] = np.int(traindata.iloc[(batchIndex[i]+num_per_batch+1), 1] >= target_buy)
-        trainLabel.loc[i, 1] = np.int((traindata.iloc[(batchIndex[i]+num_per_batch+1), 1] < target_buy) & (traindata.iloc[(batchIndex[i]+num_per_batch+1), 1] >= target_sell))
-        trainLabel.loc[i, 2] = np.int(traindata.iloc[(batchIndex[i]+num_per_batch+1), 1] < target_sell)
+        trainBatch[i,] = (traindata.iloc[batchIndex[i]:(batchIndex[i]+num_of_days),2:traindata.shape[1]]).transpose()
+        trainLabel.loc[i, 0] = np.int(traindata.iloc[(batchIndex[i]+num_of_days+1), 1] >= target_buy)
+        trainLabel.loc[i, 1] = np.int((traindata.iloc[(batchIndex[i]+num_of_days+1), 1] < target_buy) & (traindata.iloc[(batchIndex[i]+num_per_batch+1), 1] >= target_sell))
+        trainLabel.loc[i, 2] = np.int(traindata.iloc[(batchIndex[i]+num_of_days+1), 1] < target_sell)
 
     trainBatch = trainBatch.tolist()
     return(trainBatch,trainLabel)
 
 
 def getTestingBatch_timeseries(batch_size, testdata):
-    real_return = testdata.iloc[num_per_batch, 1]
+    real_return = testdata.iloc[-1, 1]
     testLabel = pd.DataFrame(data=np.zeros((batch_size, num_class)))
 
     testBatch = np.ndarray((batch_size, num_per_batch, num_of_days))
 
     for i in range(batch_size):
-        testBatch[i,] = testdata.iloc[0:num_per_batch,2:traindata.shape[1]]
+        testBatch[i,] = (testdata.iloc[0:num_of_days,2:traindata.shape[1]]).transpose()
         testLabel.loc[i, 0] = np.int(real_return >= target_buy)
         testLabel.loc[i, 1] = np.int((real_return < target_buy) & (real_return >= target_sell))
         testLabel.loc[i, 2] = np.int(real_return < target_sell)
@@ -123,7 +123,7 @@ def LSTM(input_data,weight,bias):
 prediction = LSTM(input_data,weight,bias)
 #define cost
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction,labels = labels))
-optimizer = tf.train.AdamOptimizer(1e-4).minimize(cost)
+optimizer = tf.train.AdamOptimizer(1e-5).minimize(cost)
 correct_prediction = tf.equal(tf.argmax(prediction,1),tf.argmax(labels,1))
 prediction_results = tf.argmax(prediction,1)[0]
 accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
@@ -153,9 +153,9 @@ with tf.Session() as sess:
 
     net_position = 0 #initialize action
     # #testing data
-    for step in range(test_data.shape[0] - num_per_batch - 1):
+    for step in range(test_data.shape[0] - num_of_days - 1):
 
-        nextTestBatch,nextTestBatchLabels,realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[step : step + num_per_batch + 1,:])
+        nextTestBatch,nextTestBatchLabels,realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[step : step + num_of_days + 1,:])
         #nextBatch = tf.unstack(nextBatch)
         sess.run(optimizer, feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
 
@@ -184,9 +184,9 @@ with tf.Session() as sess:
 
 
 
-benchmark = (initial_capital*np.cumprod(1+test_data.iloc[num_per_batch:test_data.shape[0], 1])).tolist()
+benchmark = (initial_capital*np.cumprod(1+test_data.iloc[num_of_days:test_data.shape[0], 1])).tolist()
 SR_ptf = np.average(ptf_ret)/np.std(ptf_ret)*np.sqrt(252)
-SR_mkt = np.average(test_data.iloc[num_per_batch:test_data.shape[0], 1])/np.std(test_data.iloc[num_per_batch:test_data.shape[0], 1])*np.sqrt(252)
+SR_mkt = np.average(test_data.iloc[num_of_days:test_data.shape[0], 1])/np.std(test_data.iloc[num_of_days:test_data.shape[0], 1])*np.sqrt(252)
 print("Portfolio sharpe ratio = "+ str(SR_ptf))
 print("Market sharpe ratio = "+ str(SR_mkt))
 plt.plot(ptf_value,'-b',label = 'Portfolio')
