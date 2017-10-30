@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 
 
 #financial
-raw_data = pd.read_csv('data/fin_stock.csv',sep = ',')
-train_data = raw_data.iloc[0:1511,]
-test_data = raw_data.iloc[1481:1761,]
+# raw_data = pd.read_csv('data/fin_stock.csv',sep = ',')
+# train_data = raw_data.iloc[0:1511,]
+# test_data = raw_data.iloc[1481:1761,]
 
 #Index
 # raw_data = pd.read_csv('data/index_data.csv',sep = ',')
@@ -18,21 +18,21 @@ test_data = raw_data.iloc[1481:1761,]
 # train_data = raw_data.iloc[0:6501,]
 # test_data = raw_data.iloc[6471:6761,]
 #tech firm
-# train_data = pd.read_csv('data/tech_stock.csv',sep = ',')
-# test_data = pd.read_csv('data/test_tech.csv',sep = ',')
-
+raw_data = pd.read_csv('data/tech_stock.csv',sep = ',')
+train_data = raw_data.iloc[0:909,]
+test_data = raw_data.iloc[879:1159,]
 #params
 batch_size = 100
 num_per_batch = train_data.shape[1] - 2
 num_of_days = 30
 num_class = 4
 lstm_size = 64
-num_iteration = 5000
+num_iteration = 2000
 #num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
-target_buy = 0.005
-target_sell = -0.008
+target_buy = 0.004
+target_sell = -0.006
 trans_cost = 0.0005
 borrow_rate = 0.0002
 initial_capital = 100
