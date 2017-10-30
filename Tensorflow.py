@@ -96,13 +96,14 @@ def getReturn(net_position, action, actual_return):
         adj_ret = 1 - actual_return - Tcost
     else:
         if net_position == -1:
-            Tcost = borrow_rate
-            adj_ret = 1 - actual_return - Tcost
+            Tcost = trans_cost
+            adj_ret = 1 - Tcost
         elif net_position == 1:
-            Tcost = 0
-            adj_ret = 1 + actual_return - Tcost
+            Tcost = trans_cost
+            adj_ret = 1 - Tcost
         else:
             adj_ret = 1
+        net_position = 0
 
     return(adj_ret,net_position)
 
