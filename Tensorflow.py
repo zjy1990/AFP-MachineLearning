@@ -21,8 +21,8 @@ test_data = raw_data.iloc[4729:4989,]
 
 #params
 batch_size = 100
-num_per_batch = 30
-num_per_day = train_data.shape[1] - 2
+num_per_batch = train_data.shape[1] - 2
+num_of_days = 30
 num_class = 3
 lstm_size = 64
 num_iteration = 5000
@@ -42,7 +42,7 @@ ptf_ret = []
 def getTrainingBatch_random(batch_size, traindata):
     maxNumber = traindata.shape[0]-num_per_batch-1
     batchIndex = np.random.randint(0, maxNumber, batch_size)
-    trainBatch = np.ndarray((batch_size, num_per_batch, num_per_day))
+    trainBatch = np.ndarray((batch_size, num_per_batch, num_of_days))
     trainLabel = pd.DataFrame(data=np.zeros((batch_size, num_class)))
 
     for i in range(len(batchIndex)):
@@ -59,7 +59,7 @@ def getTestingBatch_timeseries(batch_size, testdata):
     real_return = testdata.iloc[num_per_batch, 1]
     testLabel = pd.DataFrame(data=np.zeros((batch_size, num_class)))
 
-    testBatch = np.ndarray((batch_size, num_per_batch, num_per_day))
+    testBatch = np.ndarray((batch_size, num_per_batch, num_of_days))
 
     for i in range(batch_size):
         testBatch[i,] = testdata.iloc[0:num_per_batch,2:traindata.shape[1]]
@@ -107,7 +107,7 @@ weight = tf.Variable(tf.truncated_normal([lstm_size,num_class]))
 bias = tf.Variable(tf.constant(0.1,shape=[num_class]))
 #define labels and input data format
 labels = tf.placeholder(tf.float32,[batch_size,num_class])
-input_data = tf.placeholder(tf.float32,[batch_size,num_per_batch,num_per_day])
+input_data = tf.placeholder(tf.float32, [batch_size, num_per_batch, num_of_days])
 
 #LSTM cell construction
 def LSTM(input_data,weight,bias):
