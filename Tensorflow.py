@@ -18,9 +18,9 @@ import matplotlib.pyplot as plt
 # train_data = raw_data.iloc[0:6501,]
 # test_data = raw_data.iloc[6471:6761,]
 #tech firm
-raw_data = pd.read_csv('data/tech_stock.csv',sep = ',')
-train_data = raw_data.iloc[0:909,]
-test_data = raw_data.iloc[879:1159,]
+raw_data = pd.read_csv('data/IDX_sp500_only1.csv',sep = ',')
+train_data = raw_data.iloc[0:5000,]
+test_data = raw_data.iloc[5001:5800,]
 #params
 batch_size = 100
 num_per_batch = train_data.shape[1] - 2
@@ -31,10 +31,10 @@ num_iteration = 2000
 #num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
-target_buy = 0.004
-target_sell = -0.006
-trans_cost = 0.0005
-borrow_rate = 0.0002
+target_buy = 0.005
+target_sell = -0.004
+trans_cost = 0.000
+borrow_rate = 0.000
 initial_capital = 100
 ptf_value = []
 ptf_value.append(initial_capital)
@@ -215,7 +215,7 @@ print("Portfolio sharpe ratio = "+ str(SR_ptf))
 print("Market sharpe ratio = "+ str(SR_mkt))
 plt.plot(ptf_value,'-b',label = 'Portfolio')
 plt.plot(benchmark,'-r',label = 'Benchmark')
-plt.axis([0,250,0,150])
+plt.axis([0, test_data.shape[0],0,150])
 plt.ylabel('Cumulative portfolio value')
 plt.xlabel('Time')
 plt.legend()
