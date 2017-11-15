@@ -1,5 +1,3 @@
-
-
 import tensorflow as tf
 import numpy as np
 import pandas as pd
@@ -24,17 +22,15 @@ test_data = raw_data.iloc[41000:42645,]
 #params
 batch_size = 100
 num_per_batch = train_data.shape[1] - 2
-num_of_time_series = 100
-num_class = 4
+num_of_time_series = 80
+num_class = 3
 lstm_size = 64
 num_iteration = 2000
 #num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
 target_buy = 0.0009
-target_sell = -0.0009
 trans_cost = 0.000
-borrow_rate = 0.000
 initial_capital = 100
 ptf_value = []
 ptf_value.append(initial_capital)
@@ -51,9 +47,7 @@ def getTrainingBatch_random(batch_size, traindata):
         trainBatch[i,] = (traindata.iloc[batchIndex[i]:(batchIndex[i] + num_of_time_series), 2:traindata.shape[1]]).transpose()
         trainLabel.loc[i, 0] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] >= target_buy)
         trainLabel.loc[i, 1] = np.int((traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] < target_buy) & (traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] >= 0))
-        trainLabel.loc[i, 2] = np.int((traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] < 0) & (traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] >= target_sell))
-        trainLabel.loc[i, 3] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] < target_sell)
-
+        trainLabel.loc[i, 2] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] < 0)
     trainBatch = trainBatch.tolist()
     return(trainBatch,trainLabel)
 
@@ -68,8 +62,7 @@ def getTestingBatch_timeseries(batch_size, testdata):
         testBatch[i,] = (testdata.iloc[0:num_of_time_series, 2:traindata.shape[1]]).transpose()
         testLabel.loc[i, 0] = np.int(real_return >= target_buy)
         testLabel.loc[i, 1] = np.int((real_return < target_buy) & (real_return >= 0))
-        testLabel.loc[i, 2] = np.int((real_return < 0) & (real_return >= target_sell))
-        testLabel.loc[i, 3] = np.int(real_return < target_sell)
+        testLabel.loc[i, 2] = np.int(real_return < 0)
 
     testBatch = testBatch.tolist()
 
@@ -82,44 +75,24 @@ def getReturn(net_position, action, actual_return):
             Tcost = trans_cost
         elif net_position == 1:
             Tcost = 0
-        else:
-            Tcost = trans_cost*2
         net_position = 1
         adj_ret = 1 + actual_return - Tcost
 
-    elif action == "Sell":
+    elif action == "Close":
         if net_position == 0:
-            Tcost = trans_cost + borrow_rate
+            Tcost = 0
         elif net_position == 1:
-            Tcost = 2*trans_cost + borrow_rate
-        else:
-            Tcost = borrow_rate
-        net_position = -1
-        adj_ret = 1 - actual_return - Tcost
-    elif action == "Hold+":
-        if net_position == -1:
             Tcost = trans_cost
-            adj_ret = 1 - Tcost
-            net_position = 0
-        elif net_position == 1:
+        net_position = 0
+        adj_ret = 1 - Tcost
+    elif action == "Hold":
+        if net_position == 1:
             Tcost = 0
             adj_ret = 1 +actual_return
             net_position = 1
         else:
             adj_ret = 1
-            net_position = 0
-    else:
-        if net_position == -1:
-            Tcost = borrow_rate
-            adj_ret = 1 - actual_return - Tcost
-            net_position = -1
-        elif net_position == 1:
-            Tcost = trans_cost
-            adj_ret = 1 - Tcost
-            net_position = 0
-        else:
-            adj_ret = 1
-            net_position = 0
+
 
     return(adj_ret,net_position)
 
@@ -185,11 +158,9 @@ with tf.Session() as sess:
         if pred_result == 0:
             action = "Buy"
         elif pred_result == 1:
-            action = "Hold+"
-        elif pred_result == 2:
-            action = "Hold-"
+            action = "Hold"
         else:
-            action = "Sell"
+            action = "Close"
 
         date = test_data.iloc[step,0]
         adj_ret,net_position = getReturn(net_position,action,realize_return)
