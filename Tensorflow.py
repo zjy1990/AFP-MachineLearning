@@ -27,7 +27,7 @@ num_per_batch = train_data.shape[1] - 2
 num_of_time_series = 100
 num_class = 4
 lstm_size = 64
-num_iteration = 2000
+num_iteration = 500
 #num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
@@ -49,10 +49,10 @@ def getTrainingBatch_random(batch_size, traindata):
 
     for i in range(len(batchIndex)):
         trainBatch[i,] = (traindata.iloc[batchIndex[i]:(batchIndex[i] + num_of_time_series), 2:traindata.shape[1]]).transpose()
-        trainLabel.loc[i, 0] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] >= target_buy)
-        trainLabel.loc[i, 1] = np.int((traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] < target_buy) & (traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] >= 0))
-        trainLabel.loc[i, 2] = np.int((traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] < 0) & (traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] >= target_sell))
-        trainLabel.loc[i, 3] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] < target_sell)
+        trainLabel.loc[i, 0] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] >= target_buy)
+        trainLabel.loc[i, 1] = np.int((traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] < target_buy) & (traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] >= 0))
+        trainLabel.loc[i, 2] = np.int((traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] < 0) & (traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] >= target_sell))
+        trainLabel.loc[i, 3] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] < target_sell)
 
     trainBatch = trainBatch.tolist()
     return(trainBatch,trainLabel)
@@ -103,7 +103,7 @@ def getReturn(net_position, action, actual_return):
             net_position = 0
         elif net_position == 1:
             Tcost = 0
-            adj_ret = 1 +actual_return
+            adj_ret = 1 + actual_return
             net_position = 1
         else:
             adj_ret = 1
@@ -176,7 +176,7 @@ with tf.Session() as sess:
     # #testing data
     for step in range(test_data.shape[0] - num_of_time_series - 1):
 
-        nextTestBatch,nextTestBatchLabels,realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[step : step + num_of_time_series + 1, :])
+        nextTestBatch,nextTestBatchLabels,realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[step : step + num_of_time_series , :])
         #nextBatch = tf.unstack(nextBatch)
         sess.run(optimizer, feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
 
@@ -191,16 +191,15 @@ with tf.Session() as sess:
         else:
             action = "Sell"
 
-        date = test_data.iloc[step,0]
+        date = test_data.iloc[step + num_of_time_series+1,0]
         adj_ret,net_position = getReturn(net_position,action,realize_return)
         ptf_value.append(adj_ret*ptf_value[step])
         ptf_ret.append(adj_ret-1)
-        print(str(date) +" " + action +" : Cumulative portfolio value = " + str(ptf_value[step+1]))
+        print(str(date) +" " + action +" : Cumulative portfolio value = " + str(ptf_value[step+1]) + " " + str(realize_return))
 
-        # if step == test_data.shape[0]-1:#report summary
-        #     # Calculate batch accuracy & loss
-        #     acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
-        #     print("Step " + str(step) + ", Minibatch Loss= " + \
+            # Calculate batch accuracy & loss
+        # acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
+        # print("Minibatch Loss= " + \
         #           "{:.6f}".format(loss) + ", Training Accuracy= " + \
         #           "{:.5f}".format(acc))
 
