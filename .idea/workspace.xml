@@ -2,10 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3f75087e-9f41-4e10-9c05-46fcf59aa577" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/AFP.iml" afterPath="$PROJECT_DIR$/.idea/AFP.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Tensorflow.py" afterPath="$PROJECT_DIR$/Tensorflow.py" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/test_fin.csv" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/test_index.csv" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/test_tech.csv" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/fin_stock.csv" afterPath="$PROJECT_DIR$/data/fin_stock.csv" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/tech_stock.csv" afterPath="$PROJECT_DIR$/data/tech_stock.csv" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -19,8 +20,8 @@
       <file leaf-file-name="Tensorflow.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Tensorflow.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="540">
-              <caret line="34" column="21" lean-forward="true" selection-start-line="34" selection-start-column="21" selection-end-line="34" selection-end-column="21" />
+            <state relative-caret-position="243">
+              <caret line="23" column="16" lean-forward="false" selection-start-line="23" selection-start-column="16" selection-end-line="23" selection-end-column="16" />
               <folding>
                 <element signature="e#2#25#0" expanded="true" />
               </folding>
@@ -107,6 +108,11 @@
             <path>
               <item name="AFP-MachineLearning" type="b2602c69:ProjectViewProjectNode" />
               <item name="AFP-MachineLearning" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="AFP-MachineLearning" type="b2602c69:ProjectViewProjectNode" />
+              <item name="AFP-MachineLearning" type="462c0819:PsiDirectoryNode" />
+              <item name="data" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -600,8 +606,8 @@
     <entry file="file://$PROJECT_DIR$/LSTM/__init__.py" />
     <entry file="file://$PROJECT_DIR$/Tensorflow.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="540">
-          <caret line="34" column="21" lean-forward="true" selection-start-line="34" selection-start-column="21" selection-end-line="34" selection-end-column="21" />
+        <state relative-caret-position="243">
+          <caret line="23" column="16" lean-forward="false" selection-start-line="23" selection-start-column="16" selection-end-line="23" selection-end-column="16" />
           <folding>
             <element signature="e#2#25#0" expanded="true" />
           </folding>
