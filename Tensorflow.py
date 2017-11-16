@@ -11,14 +11,13 @@ import matplotlib.pyplot as plt
 # test_data = raw_data.iloc[1481:1761,]
 
 #Index
-# raw_data = pd.read_csv('data/index_data.csv',sep = ',')
-#
-# train_data = raw_data.iloc[0:6501,]
-# test_data = raw_data.iloc[6471:6761,]
+raw_data = pd.read_csv('data/IDX_sp500_only1.csv',sep = ',')
+train_data = raw_data.iloc[0:4860,]
+test_data = raw_data.iloc[4860:5000,]
 #tech firm
-raw_data = pd.read_csv('data/GOOG.csv',sep = ',')
-train_data = raw_data.iloc[0:40000,]
-test_data = raw_data.iloc[41000:42645,]
+# raw_data = pd.read_csv('data/GOOG.csv',sep = ',')
+# train_data = raw_data.iloc[0:40000,]
+# test_data = raw_data.iloc[41000:42645,]
 #params
 batch_size = 100
 num_per_batch = train_data.shape[1] - 2
@@ -29,7 +28,7 @@ num_iteration = 2000
 #num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
-target_buy = 0.0009
+target_buy = 0.003
 trans_cost = 0.000
 initial_capital = 100
 ptf_value = []
@@ -45,9 +44,9 @@ def getTrainingBatch_random(batch_size, traindata):
 
     for i in range(len(batchIndex)):
         trainBatch[i,] = (traindata.iloc[batchIndex[i]:(batchIndex[i] + num_of_time_series), 2:traindata.shape[1]]).transpose()
-        trainLabel.loc[i, 0] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] >= target_buy)
-        trainLabel.loc[i, 1] = np.int((traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] < target_buy) & (traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] >= 0))
-        trainLabel.loc[i, 2] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] < 0)
+        trainLabel.loc[i, 0] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] >= target_buy)
+        trainLabel.loc[i, 1] = np.int((traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] < target_buy) & (traindata.iloc[(batchIndex[i] + num_of_time_series + 1), 1] >= 0))
+        trainLabel.loc[i, 2] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] < 0)
     trainBatch = trainBatch.tolist()
     return(trainBatch,trainLabel)
 
@@ -149,7 +148,7 @@ with tf.Session() as sess:
     # #testing data
     for step in range(test_data.shape[0] - num_of_time_series - 1):
 
-        nextTestBatch,nextTestBatchLabels,realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[step : step + num_of_time_series + 1, :])
+        nextTestBatch,nextTestBatchLabels,realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[step : step + num_of_time_series, :])
         #nextBatch = tf.unstack(nextBatch)
         sess.run(optimizer, feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
 
@@ -159,7 +158,7 @@ with tf.Session() as sess:
             action = "Buy"
         elif pred_result == 1:
             action = "Hold"
-        else:
+        elif pred_result == 2:
             action = "Close"
 
         date = test_data.iloc[step,0]
