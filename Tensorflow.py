@@ -17,9 +17,9 @@ import matplotlib.pyplot as plt
 # train_data = raw_data.iloc[0:5000,]
 # test_data = raw_data.iloc[5200:5600,]
 #tech firm
-raw_data = pd.read_csv('data/GOOG.csv',sep = ',')
-train_data = raw_data.iloc[0:35000,]
-test_data = raw_data.iloc[35000:36645,]
+raw_data = pd.read_csv('data/NFLX.csv',sep = ',')
+train_data = raw_data.iloc[0:32000,]
+test_data = raw_data.iloc[32000:33463,]
 #params
 batch_size = 100
 num_per_batch = train_data.shape[1] - 2
@@ -138,7 +138,9 @@ with tf.Session() as sess:
     print("Optimization Finished!")
 
     net_position = 0 #initialize action
+    accuracy_counter = 0 #initialize overall accuracy
     # #testing data
+    print("Testing starts!")
     for step in range(test_data.shape[0] - num_of_time_series - 1):
 
         nextTestBatch,nextTestBatchLabels,realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[step : step + num_of_time_series , :])
@@ -156,14 +158,17 @@ with tf.Session() as sess:
         adj_ret,net_position = getReturn(net_position,action,realize_return)
         ptf_value.append(adj_ret*ptf_value[step])
         ptf_ret.append(adj_ret-1)
-        print(str(date) +" " + action +" : Cumulative portfolio value = " + str(ptf_value[step+1]) + " " + str(realize_return))
 
             # Calculate batch accuracy & loss
-        # acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
+        #acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
         # print("Minibatch Loss= " + \
         #           "{:.6f}".format(loss) + ", Training Accuracy= " + \
         #           "{:.5f}".format(acc))
-
+        if (realize_return >= 0 and pred_result == 0) or  (realize_return < 0 and pred_result == 1):
+            accuracy_counter += 1
+        print(str(date) +" " + action +" : Cumulative portfolio value = " + str(ptf_value[step+1]))
+    overall_accuracy = accuracy_counter/(test_data.shape[0] - num_of_time_series - 1)
+    print("Overall prediction accuracy: " + "{:.4f}".format(overall_accuracy))
     print("Testing Finished!")
 
 
