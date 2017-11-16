@@ -13,25 +13,25 @@ import matplotlib.pyplot as plt
 # test_data = raw_data.iloc[1481:1761,]
 
 #Index
-raw_data = pd.read_csv('data/IDX_sp500_only1.csv',sep = ',')
-train_data = raw_data.iloc[0:5000,]
-test_data = raw_data.iloc[5200:5600,]
+# raw_data = pd.read_csv('data/IDX_sp500_only1.csv',sep = ',')
+# train_data = raw_data.iloc[0:5000,]
+# test_data = raw_data.iloc[5200:5600,]
 #tech firm
-# raw_data = pd.read_csv('data/GOOG.csv',sep = ',')
-# train_data = raw_data.iloc[0:40000,]
-# test_data = raw_data.iloc[41000:42645,]
+raw_data = pd.read_csv('data/GOOG.csv',sep = ',')
+train_data = raw_data.iloc[0:35000,]
+test_data = raw_data.iloc[35000:36645,]
 #params
 batch_size = 100
 num_per_batch = train_data.shape[1] - 2
-num_of_time_series = 60
+num_of_time_series = 100
 num_class = 4
 lstm_size = 64
 num_iteration = 2000
 #num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
-target_buy = 0.0045
-target_sell = -0.004
+target_buy = 0.00001
+target_sell = -0.00001
 trans_cost = 0.000
 borrow_rate = 0.000
 initial_capital = 100
