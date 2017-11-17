@@ -18,15 +18,15 @@ import matplotlib.pyplot as plt
 # test_data = raw_data.iloc[5200:5600,]
 #tech firm
 raw_data = pd.read_csv('data/NFLX.csv',sep = ',')
-train_data = raw_data.iloc[0:28000,]
-test_data = raw_data.iloc[28000:29645,]
+train_data = raw_data.iloc[0:39000,]
+test_data = raw_data.iloc[39000:40645,]
 #params
 batch_size = 200
 num_per_batch = train_data.shape[1] - 2
 num_of_time_series = 100
 num_class = 4
 lstm_size = 64
-num_iteration = 5000
+num_iteration = 2500
 #num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
