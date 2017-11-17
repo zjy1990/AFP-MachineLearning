@@ -17,21 +17,21 @@ import matplotlib.pyplot as plt
 # train_data = raw_data.iloc[0:5000,]
 # test_data = raw_data.iloc[5200:5600,]
 #tech firm
-raw_data = pd.read_csv('data/GOOG.csv',sep = ',')
-train_data = raw_data.iloc[0:35000,]
-test_data = raw_data.iloc[35000:36645,]
+raw_data = pd.read_csv('data/NFLX.csv',sep = ',')
+train_data = raw_data.iloc[0:28000,]
+test_data = raw_data.iloc[28000:29645,]
 #params
-batch_size = 100
+batch_size = 200
 num_per_batch = train_data.shape[1] - 2
 num_of_time_series = 100
 num_class = 4
 lstm_size = 64
-num_iteration = 2000
+num_iteration = 5000
 #num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
-target_buy = 0.00001
-target_sell = -0.00001
+target_buy = 0.000001
+target_sell = -0.000001
 trans_cost = 0.000
 borrow_rate = 0.000
 initial_capital = 100
@@ -172,6 +172,7 @@ with tf.Session() as sess:
     print("Optimization Finished!")
 
     net_position = 0 #initialize action
+    accuracy_counter = 0  # initialize overall accuracy
     # #testing data
     for step in range(test_data.shape[0] - num_of_time_series - 1):
 
@@ -194,14 +195,18 @@ with tf.Session() as sess:
         adj_ret,net_position = getReturn(net_position,action,realize_return)
         ptf_value.append(adj_ret*ptf_value[step])
         ptf_ret.append(adj_ret-1)
-        print(str(date) +" " + action +" : Cumulative portfolio value = " + str(ptf_value[step+1]) + " " + str(realize_return))
+        print(str(date) +" " + action +" : Cumulative portfolio value = " + str(ptf_value[step+1]))
 
             # Calculate batch accuracy & loss
         # acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
         # print("Minibatch Loss= " + \
         #           "{:.6f}".format(loss) + ", Training Accuracy= " + \
         #           "{:.5f}".format(acc))
-
+        if (realize_return >= target_buy and pred_result == 0) or (realize_return < target_sell and pred_result == 3):
+            accuracy_counter += 1
+        print(str(date) + " " + action + " : Cumulative portfolio value = " + str(ptf_value[step + 1]))
+        overall_accuracy = accuracy_counter / (test_data.shape[0] - num_of_time_series - 1)
+    print("Overall prediction accuracy: " + "{:.4f}".format(overall_accuracy))
     print("Testing Finished!")
 
 
