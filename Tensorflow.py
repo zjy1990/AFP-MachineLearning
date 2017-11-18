@@ -17,16 +17,16 @@ import matplotlib.pyplot as plt
 # train_data = raw_data.iloc[0:5000,]
 # test_data = raw_data.iloc[5200:5600,]
 #tech firm
-raw_data = pd.read_csv('data/GOOG.csv',sep = ',')
+raw_data = pd.read_csv('data/AAPL.csv',sep = ',')
 train_data = raw_data.iloc[0:38000,]
-test_data = raw_data.iloc[38000:39463,]
+test_data = raw_data.iloc[38000:40463,]
 #params
 batch_size = 100
 num_per_batch = train_data.shape[1] - 2
 num_of_time_series = 1
 num_class = 2
 lstm_size = 64
-num_iteration = 5000
+num_iteration = 2000
 #num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
@@ -52,6 +52,19 @@ def getTrainingBatch_random(batch_size, traindata):
     trainBatch = trainBatch.tolist()
     return(trainBatch,trainLabel)
 
+def getTrainingBatch_timeseries(batch_size, traindata):
+    maxNumber = traindata.shape[0] - num_of_time_series - 1
+    batchIndex = np.random.randint(0, maxNumber, batch_size)
+    trainBatch = np.ndarray((batch_size, num_per_batch, num_of_time_series))
+    trainLabel = pd.DataFrame(data=np.zeros((batch_size, num_class)))
+
+    for i in range(len(batchIndex)):
+        trainBatch[i,] = (traindata.iloc[batchIndex[i]:(batchIndex[i] + num_of_time_series), 2:traindata.shape[1]]).transpose()
+        trainLabel.loc[i, 0] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] >= 0)
+        trainLabel.loc[i, 1] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] < 0)
+
+    trainBatch = trainBatch.tolist()
+    return(trainBatch,trainLabel)
 
 def getTestingBatch_timeseries(batch_size, testdata):
     real_return = testdata.iloc[-1, 1]
