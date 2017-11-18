@@ -17,16 +17,16 @@ import matplotlib.pyplot as plt
 # train_data = raw_data.iloc[0:5000,]
 # test_data = raw_data.iloc[5200:5600,]
 #tech firm
-raw_data = pd.read_csv('data/NFLX.csv',sep = ',')
-train_data = raw_data.iloc[0:32000,]
-test_data = raw_data.iloc[32000:33463,]
+raw_data = pd.read_csv('data/GOOG.csv',sep = ',')
+train_data = raw_data.iloc[0:38000,]
+test_data = raw_data.iloc[38000:39463,]
 #params
 batch_size = 100
 num_per_batch = train_data.shape[1] - 2
-num_of_time_series = 100
+num_of_time_series = 1
 num_class = 2
 lstm_size = 64
-num_iteration = 2000
+num_iteration = 5000
 #num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
