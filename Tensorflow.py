@@ -1,5 +1,3 @@
-
-
 import tensorflow as tf
 import numpy as np
 import pandas as pd
@@ -13,21 +11,21 @@ import matplotlib.pyplot as plt
 # test_data = raw_data.iloc[1481:1761,]
 
 #Index
-# raw_data = pd.read_csv('data/IDX_sp500_only1.csv',sep = ',')
-# train_data = raw_data.iloc[0:5000,]
-# test_data = raw_data.iloc[5200:5600,]
+raw_data = pd.read_csv('data/index_data.csv',sep = ',')
+train_data = raw_data.iloc[0:3000,]
+test_data = raw_data.iloc[3200:4000,]
 #tech firm
-raw_data = pd.read_csv('data/AAPL.csv',sep = ',')
-train_data = raw_data.iloc[0:38000,]
-test_data = raw_data.iloc[38000:40463,]
+# raw_data = pd.read_csv('data/AAPL.csv',sep = ',')
+# train_data = raw_data.iloc[10000:28000,]
+# test_data = raw_data.iloc[28000:29463,]
 #params
-batch_size = 100
+batch_size = 240
 num_per_batch = train_data.shape[1] - 2
 num_of_time_series = 1
 num_class = 2
-lstm_size = 64
-num_iteration = 2000
-#num_iteration = train_data.shape[0] - batch_size + 1
+lstm_size = 25
+#num_iteration = 2000
+num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
 trans_cost = 0.0
@@ -136,10 +134,9 @@ with tf.Session() as sess:
 #run model random time series
     print("Optimization Starts!")
     for step in range(num_iteration):
-        #traindata = train_data.iloc[step:step+batch_size,:]
-        traindata =train_data
-        nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_random(batch_size,traindata)
-        #nextBatch = tf.unstack(nextBatch)
+        traindata = train_data.iloc[step:step+batch_size,:]
+        #traindata =train_data
+        nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_timeseries(batch_size,traindata)
         sess.run(optimizer,feed_dict= {input_data: nextTrainBatch,labels: nextTrainBatchLabels})
         if step % display_step == 0:#report summary
             # Calculate batch accuracy & loss
