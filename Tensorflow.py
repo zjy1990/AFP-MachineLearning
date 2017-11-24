@@ -1,3 +1,4 @@
+
 import tensorflow as tf
 import numpy as np
 import pandas as pd
@@ -11,19 +12,19 @@ import matplotlib.pyplot as plt
 # test_data = raw_data.iloc[1481:1761,]
 
 #Index
-raw_data = pd.read_csv('data/index_data.csv',sep = ',')
-train_data = raw_data.iloc[0:3000,]
-test_data = raw_data.iloc[3200:4000,]
+raw_data = pd.read_csv('data/SPY_JNJ_IXIC.csv',sep = ',')
+train_data = raw_data.iloc[0:5000,]
+test_data = raw_data.iloc[5200:6000,]
 #tech firm
 # raw_data = pd.read_csv('data/AAPL.csv',sep = ',')
-# train_data = raw_data.iloc[10000:28000,]
-# test_data = raw_data.iloc[28000:29463,]
+# train_data = raw_data.iloc[22000:25000,]
+# test_data = raw_data.iloc[26000:27463,]
 #params
 batch_size = 240
 num_per_batch = train_data.shape[1] - 2
 num_of_time_series = 1
 num_class = 2
-lstm_size = 25
+lstm_size = 100
 #num_iteration = 2000
 num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
@@ -51,15 +52,13 @@ def getTrainingBatch_random(batch_size, traindata):
     return(trainBatch,trainLabel)
 
 def getTrainingBatch_timeseries(batch_size, traindata):
-    maxNumber = traindata.shape[0] - num_of_time_series - 1
-    batchIndex = np.random.randint(0, maxNumber, batch_size)
     trainBatch = np.ndarray((batch_size, num_per_batch, num_of_time_series))
     trainLabel = pd.DataFrame(data=np.zeros((batch_size, num_class)))
 
-    for i in range(len(batchIndex)):
-        trainBatch[i,] = (traindata.iloc[batchIndex[i]:(batchIndex[i] + num_of_time_series), 2:traindata.shape[1]]).transpose()
-        trainLabel.loc[i, 0] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] >= 0)
-        trainLabel.loc[i, 1] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] < 0)
+    for i in range(batch_size):
+        trainBatch[i,] = (traindata.iloc[i:(i + num_of_time_series), 2:traindata.shape[1]]).transpose()
+        trainLabel.loc[i, 0] = np.int(traindata.iloc[(i + num_of_time_series - 1), 1] >= 0)
+        trainLabel.loc[i, 1] = np.int(traindata.iloc[(i + num_of_time_series - 1), 1] < 0)
 
     trainBatch = trainBatch.tolist()
     return(trainBatch,trainLabel)
@@ -158,7 +157,6 @@ with tf.Session() as sess:
         sess.run(optimizer, feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
 
         pred_result = sess.run(prediction_results, feed_dict={input_data: nextTestBatch, labels:nextTestBatchLabels})
-
         if pred_result == 0:
             action = "Buy"
         else:
@@ -170,7 +168,7 @@ with tf.Session() as sess:
         ptf_ret.append(adj_ret-1)
 
             # Calculate batch accuracy & loss
-        #acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
+        # acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
         # print("Minibatch Loss= " + \
         #           "{:.6f}".format(loss) + ", Training Accuracy= " + \
         #           "{:.5f}".format(acc))
@@ -184,8 +182,9 @@ with tf.Session() as sess:
 
 
 benchmark = (initial_capital * np.cumprod(1 + test_data.iloc[num_of_time_series-1:test_data.shape[0], 1])).tolist()
+benchmark.insert(0,initial_capital)
 SR_ptf = np.average(ptf_ret)/np.std(ptf_ret)*np.sqrt(252)
-SR_mkt = np.average(test_data.iloc[num_of_time_series:test_data.shape[0], 1]) / np.std(test_data.iloc[num_of_time_series:test_data.shape[0], 1]) * np.sqrt(252)
+SR_mkt = np.average(test_data.iloc[num_of_time_series-1:test_data.shape[0], 1]) / np.std(test_data.iloc[num_of_time_series-1 :test_data.shape[0], 1]) * np.sqrt(252)
 print("Portfolio sharpe ratio = "+ str(SR_ptf))
 print("Market sharpe ratio = "+ str(SR_mkt))
 plt.plot(ptf_value,'-b',label = 'Portfolio')
