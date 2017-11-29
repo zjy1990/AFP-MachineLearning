@@ -6,19 +6,22 @@ import matplotlib.pyplot as plt
 #import raw datam
 
 
-#financial
-# raw_data = pd.read_csv('data/fin_stock.csv',sep = ',')
-# train_data = raw_data.iloc[0:1511,]
-# test_data = raw_data.iloc[1481:1761,]
+#set training and testing data period format = 'yyyy-mm-dd'
+train_date_end = '2010-12-31'
+test_data_start = '2011-01-01'
+test_data_end = '2011-12-31'
+
+
 
 #Index
-raw_data = pd.read_csv('data/SPY_JNJ_IXIC.csv',sep = ',')
-train_data = raw_data.iloc[0:5000,]
-test_data = raw_data.iloc[5200:6000,]
+raw_data = pd.read_csv('data/index_data.csv',sep = ',')
+train_data = raw_data[raw_data.Date <= train_date_end]
+test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
 #tech firm
-# raw_data = pd.read_csv('data/AAPL.csv',sep = ',')
-# train_data = raw_data.iloc[22000:25000,]
-# test_data = raw_data.iloc[26000:27463,]
+# raw_data = pd.read_csv('data/tech_stock.csv',sep = ',')
+# train_data = raw_data[raw_data.Date <= train_date_end]
+# test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
+
 #params
 batch_size = 240
 num_per_batch = train_data.shape[1] - 2
