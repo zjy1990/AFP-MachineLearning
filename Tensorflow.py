@@ -7,14 +7,14 @@ import matplotlib.pyplot as plt
 
 
 #set training and testing data period format = 'yyyy-mm-dd'
-train_date_end = '2010-12-31'
-test_data_start = '2011-01-01'
-test_data_end = '2011-12-31'
+train_date_end = '2007-12-31'
+test_data_start = '2008-01-01'
+test_data_end = '2008-12-31'
 
 
 
 #Index
-raw_data = pd.read_csv('data/index_data.csv',sep = ',')
+raw_data = pd.read_csv('data/index_data_stdized.csv',sep = ',')
 train_data = raw_data[raw_data.Date <= train_date_end]
 test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
 #tech firm
@@ -27,7 +27,7 @@ batch_size = 240
 num_per_batch = train_data.shape[1] - 2
 num_of_time_series = 1
 num_class = 2
-lstm_size = 128
+lstm_size = 100
 #num_iteration = 2000
 num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
@@ -122,7 +122,7 @@ def LSTM(input_data,weight,bias):
 prediction = LSTM(input_data,weight,bias)
 #define cost
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction,labels = labels))
-optimizer = tf.train.AdamOptimizer(1e-4).minimize(cost)
+optimizer = tf.train.AdamOptimizer(1e-3).minimize(cost)
 correct_prediction = tf.equal(tf.argmax(prediction,1),tf.argmax(labels,1))
 prediction_results = tf.argmax(prediction,1)[0]
 accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
@@ -192,7 +192,7 @@ print("Portfolio sharpe ratio = "+ str(SR_ptf))
 print("Market sharpe ratio = "+ str(SR_mkt))
 plt.plot(ptf_value,'-b',label = 'Portfolio')
 plt.plot(benchmark,'-r',label = 'Benchmark')
-plt.axis([0, test_data.shape[0],np.min(ptf_value)*0.9,np.max(ptf_value)*1.1])
+plt.axis([0, test_data.shape[0],np.min(np.min(benchmark),np.min(ptf_value))*0.9,np.max(np.max(benchmark),np.max(ptf_value))*1.1])
 plt.ylabel('Cumulative portfolio value')
 plt.xlabel('Time')
 plt.legend()
