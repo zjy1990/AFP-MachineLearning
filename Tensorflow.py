@@ -6,34 +6,33 @@ import pandas as pd
 import matplotlib.pyplot as plt
 #import raw datam
 
+#set training and testing data period format = 'yyyy-mm-dd'
+train_date_end = '2007-12-31'
+test_data_start = '2008-01-01'
+test_data_end = '2008-12-31'
 
-#financial
-# raw_data = pd.read_csv('data/fin_stock.csv',sep = ',')
-# train_data = raw_data.iloc[0:1511,]
-# test_data = raw_data.iloc[1481:1761,]
+
 
 #Index
-# raw_data = pd.read_csv('data/IDX_sp500_only1.csv',sep = ',')
-# train_data = raw_data.iloc[0:5000,]
-# test_data = raw_data.iloc[5200:5600,]
-#tech firm
-raw_data = pd.read_csv('data/NFLX.csv',sep = ',')
-train_data = raw_data.iloc[0:39000,]
-test_data = raw_data.iloc[39000:40645,]
+raw_data = pd.read_csv('data/IDX_non_lag_asian_&_stock.csv',sep = ',')
+train_data = raw_data[raw_data.Date <= train_date_end]
+test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
+
+
 #params
-batch_size = 200
+batch_size = 240
 num_per_batch = train_data.shape[1] - 2
-num_of_time_series = 100
+num_of_time_series = 1
 num_class = 4
-lstm_size = 64
-num_iteration = 2500
-#num_iteration = train_data.shape[0] - batch_size + 1
+lstm_size = 100
+#num_iteration = 2500
+num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
-target_buy = 0.000001
-target_sell = -0.000001
-trans_cost = 0.000
-borrow_rate = 0.000
+target_buy = 0.003
+target_sell = -0.003
+trans_cost = 0.001
+borrow_rate = 0.0002
 initial_capital = 100
 ptf_value = []
 ptf_value.append(initial_capital)
@@ -52,6 +51,20 @@ def getTrainingBatch_random(batch_size, traindata):
         trainLabel.loc[i, 1] = np.int((traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] < target_buy) & (traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] >= 0))
         trainLabel.loc[i, 2] = np.int((traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] < 0) & (traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] >= target_sell))
         trainLabel.loc[i, 3] = np.int(traindata.iloc[(batchIndex[i] + num_of_time_series - 1), 1] < target_sell)
+
+    trainBatch = trainBatch.tolist()
+    return(trainBatch,trainLabel)
+
+def getTrainingBatch_timeseries(batch_size, traindata):
+    trainBatch = np.ndarray((batch_size, num_per_batch, num_of_time_series))
+    trainLabel = pd.DataFrame(data=np.zeros((batch_size, num_class)))
+
+    for i in range(batch_size):
+        trainBatch[i,] = (traindata.iloc[i:(i + num_of_time_series), 2:traindata.shape[1]]).transpose()
+        trainLabel.loc[i, 0] = np.int(traindata.iloc[(i + num_of_time_series - 1), 1] >= target_buy)
+        trainLabel.loc[i, 1] = np.int((traindata.iloc[(i + num_of_time_series - 1), 1] < target_buy) & (traindata.iloc[(i + num_of_time_series - 1), 1] >= 0))
+        trainLabel.loc[i, 2] = np.int((traindata.iloc[(i + num_of_time_series - 1), 1] < 0) & (traindata.iloc[(i + num_of_time_series - 1), 1] >= target_sell))
+        trainLabel.loc[i, 3] = np.int(traindata.iloc[(i + num_of_time_series - 1), 1] < target_sell)
 
     trainBatch = trainBatch.tolist()
     return(trainBatch,trainLabel)
@@ -143,7 +156,7 @@ def LSTM(input_data,weight,bias):
 prediction = LSTM(input_data,weight,bias)
 #define cost
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction,labels = labels))
-optimizer = tf.train.AdamOptimizer(1e-4).minimize(cost)
+optimizer = tf.train.AdamOptimizer(1e-3).minimize(cost)
 correct_prediction = tf.equal(tf.argmax(prediction,1),tf.argmax(labels,1))
 prediction_results = tf.argmax(prediction,1)[0]
 accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
@@ -159,7 +172,7 @@ with tf.Session() as sess:
     for step in range(num_iteration):
         #traindata = train_data.iloc[step:step+batch_size,:]
         traindata =train_data
-        nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_random(batch_size,traindata)
+        nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_timeseries(batch_size,traindata)
         #nextBatch = tf.unstack(nextBatch)
         sess.run(optimizer,feed_dict= {input_data: nextTrainBatch,labels: nextTrainBatchLabels})
         if step % display_step == 0:#report summary
@@ -191,7 +204,7 @@ with tf.Session() as sess:
         else:
             action = "Sell"
 
-        date = test_data.iloc[step + num_of_time_series+1,0]
+        date = test_data.iloc[step + num_of_time_series,0]
         adj_ret,net_position = getReturn(net_position,action,realize_return)
         ptf_value.append(adj_ret*ptf_value[step])
         ptf_ret.append(adj_ret-1)
@@ -218,7 +231,7 @@ print("Portfolio sharpe ratio = "+ str(SR_ptf))
 print("Market sharpe ratio = "+ str(SR_mkt))
 plt.plot(ptf_value,'-b',label = 'Portfolio')
 plt.plot(benchmark,'-r',label = 'Benchmark')
-plt.axis([0, test_data.shape[0],np.min(ptf_value)*0.9,np.max(ptf_value)*1.1])
+plt.axis([0, test_data.shape[0],min(np.min(benchmark),np.min(ptf_value))*0.9,max(np.max(benchmark),np.max(ptf_value))*1.1])
 plt.ylabel('Cumulative portfolio value')
 plt.xlabel('Time')
 plt.legend()
