@@ -23,7 +23,7 @@ test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_d
 # test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
 
 #params
-batch_size = 240
+batch_size = 80
 num_per_batch = train_data.shape[1] - 2
 num_of_time_series = 1
 num_class = 2
@@ -73,7 +73,7 @@ def getTestingBatch_timeseries(batch_size, testdata):
     testBatch = np.ndarray((batch_size, num_per_batch, num_of_time_series))
 
     for i in range(batch_size):
-        testBatch[i,] = (testdata.iloc[0:num_of_time_series, 2:traindata.shape[1]]).transpose()
+        testBatch[i,] = (testdata.iloc[0:num_of_time_series, 2:testdata.shape[1]]).transpose()
         testLabel.loc[i, 0] = np.int(real_return >= 0)
         testLabel.loc[i, 1] = np.int(real_return < 0)
 
@@ -165,7 +165,7 @@ with tf.Session() as sess:
         else:
             action = "Sell"
 
-        date = test_data.iloc[step + num_of_time_series+1,0]
+        date = test_data.iloc[step + num_of_time_series,0]
         adj_ret,net_position = getReturn(net_position,action,realize_return)
         ptf_value.append(adj_ret*ptf_value[step])
         ptf_ret.append(adj_ret-1)
@@ -192,7 +192,7 @@ print("Portfolio sharpe ratio = "+ str(SR_ptf))
 print("Market sharpe ratio = "+ str(SR_mkt))
 plt.plot(ptf_value,'-b',label = 'Portfolio')
 plt.plot(benchmark,'-r',label = 'Benchmark')
-plt.axis([0, test_data.shape[0],np.min(np.min(benchmark),np.min(ptf_value))*0.9,np.max(np.max(benchmark),np.max(ptf_value))*1.1])
+plt.axis([0, test_data.shape[0],min(np.min(benchmark),np.min(ptf_value))*0.9,max(np.max(benchmark),np.max(ptf_value))*1.1])
 plt.ylabel('Cumulative portfolio value')
 plt.xlabel('Time')
 plt.legend()
