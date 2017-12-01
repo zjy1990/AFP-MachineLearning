@@ -7,14 +7,14 @@ import matplotlib.pyplot as plt
 
 
 #set training and testing data period format = 'yyyy-mm-dd'
-train_date_end = '2007-12-31'
-test_data_start = '2008-01-01'
-test_data_end = '2008-12-31'
+train_date_end = '2016-09-30'
+test_data_start = '2016-10-01'
+test_data_end = '2017-12-31'
 
 
 
 #Index
-raw_data = pd.read_csv('data/index_data_stdized.csv',sep = ',')
+raw_data = pd.read_csv('data/Index_data_stdized.csv',sep = ',')
 train_data = raw_data[raw_data.Date <= train_date_end]
 test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
 #tech firm
@@ -23,7 +23,7 @@ test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_d
 # test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
 
 #params
-batch_size = 80
+batch_size = 240
 num_per_batch = train_data.shape[1] - 2
 num_of_time_series = 1
 num_class = 2
@@ -129,6 +129,8 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
 
 
 init = tf.global_variables_initializer()
+Minibatch_loss = []
+Minibatch_acc = []
 with tf.Session() as sess:
     sess.run(init)
 
@@ -143,6 +145,8 @@ with tf.Session() as sess:
         if step % display_step == 0:#report summary
             # Calculate batch accuracy & loss
             acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTrainBatch, labels: nextTrainBatchLabels})
+            Minibatch_loss.append(loss)
+            Minibatch_acc.append(acc)
             print("Step " + str(step) + ", Minibatch Loss= " + \
                   "{:.6f}".format(loss) + ", Training Accuracy= " + \
                   "{:.5f}".format(acc))
@@ -197,3 +201,11 @@ plt.ylabel('Cumulative portfolio value')
 plt.xlabel('Time')
 plt.legend()
 plt.show()
+#
+# plt.plot(Minibatch_acc,label = 'Accuracy')
+# plt.plot(Minibatch_loss,label = 'Loss')
+# plt.ylabel('In-sample Accuracy/Loss Curve')
+# plt.xlabel('Report step')
+# #plt.axis([0,20,min(Minibatch_acc)*0.9,max(Minibatch_acc)*1.1])
+# plt.legend()
+# plt.show()
