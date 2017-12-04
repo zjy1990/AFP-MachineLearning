@@ -138,10 +138,10 @@ with tf.Session() as sess:
 #run model random time series
     print("Optimization Starts!")
     for step in range(num_iteration):
-        #traindata = train_data.iloc[step:step+batch_size,:]
-        #nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_timeseries(batch_size,traindata)
-        traindata =train_data
-        nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_random(batch_size,traindata)
+        traindata = train_data.iloc[step:step+batch_size,:]
+        nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_timeseries(batch_size,traindata)
+        # traindata =train_data
+        # nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_random(batch_size,traindata)
         sess.run(optimizer,feed_dict= {input_data: nextTrainBatch,labels: nextTrainBatchLabels})
         if step % display_step == 0:#report summary
             # Calculate batch accuracy & loss
