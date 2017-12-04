@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 
 #set training and testing data period format = 'yyyy-mm-dd'
+train_date_start = '2000-01-01'
 train_date_end = '2007-12-31'
 test_data_start = '2007-02-01' # need to be date whereby the trading start date - batch_size
 test_data_end = '2008-12-31'
@@ -15,7 +16,7 @@ test_data_end = '2008-12-31'
 
 #Index
 raw_data = pd.read_csv('data\Index_data_stdized.csv',sep = ',')
-train_data = raw_data[raw_data.Date <= train_date_end]
+train_data = raw_data[(raw_data.Date >= train_date_start)&(raw_data.Date <= train_date_end)]
 test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
 #tech firm
 # raw_data = pd.read_csv('data/tech_stock.csv',sep = ',')
