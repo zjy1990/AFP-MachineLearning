@@ -7,14 +7,14 @@ import matplotlib.pyplot as plt
 
 
 #set training and testing data period format = 'yyyy-mm-dd'
-train_date_end = '2016-09-30'
-test_data_start = '2016-10-01'
-test_data_end = '2017-12-31'
+train_date_end = '2000-12-31'
+test_data_start = '2001-01-01'
+test_data_end = '2001-12-31'
 
 
 
 #Index
-raw_data = pd.read_csv('data/Index_data_stdized.csv',sep = ',')
+raw_data = pd.read_csv('data\Index_data_stdized.csv',sep = ',')
 train_data = raw_data[raw_data.Date <= train_date_end]
 test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
 #tech firm
@@ -138,9 +138,10 @@ with tf.Session() as sess:
 #run model random time series
     print("Optimization Starts!")
     for step in range(num_iteration):
-        traindata = train_data.iloc[step:step+batch_size,:]
-        #traindata =train_data
-        nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_timeseries(batch_size,traindata)
+        #traindata = train_data.iloc[step:step+batch_size,:]
+        #nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_timeseries(batch_size,traindata)
+        traindata =train_data
+        nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_random(batch_size,traindata)
         sess.run(optimizer,feed_dict= {input_data: nextTrainBatch,labels: nextTrainBatchLabels})
         if step % display_step == 0:#report summary
             # Calculate batch accuracy & loss
@@ -169,7 +170,7 @@ with tf.Session() as sess:
         else:
             action = "Sell"
 
-        date = test_data.iloc[step + num_of_time_series,0]
+        date = test_data.iloc[step + num_of_time_series - 1,0]
         adj_ret,net_position = getReturn(net_position,action,realize_return)
         ptf_value.append(adj_ret*ptf_value[step])
         ptf_ret.append(adj_ret-1)
@@ -181,7 +182,7 @@ with tf.Session() as sess:
         #           "{:.5f}".format(acc))
         if (realize_return >= 0 and pred_result == 0) or  (realize_return < 0 and pred_result == 1):
             accuracy_counter += 1
-        print(str(date) +" " + action +" : Cumulative portfolio value = " + str(ptf_value[step+1]))
+        print(str(date) +" " + action +" : Cumulative Strategy value = " + str(ptf_value[step+1]))
     overall_accuracy = accuracy_counter/(test_data.shape[0] - num_of_time_series - 1)
     print("Overall prediction accuracy: " + "{:.4f}".format(overall_accuracy))
     print("Testing Finished!")
@@ -190,18 +191,39 @@ with tf.Session() as sess:
 
 benchmark = (initial_capital * np.cumprod(1 + test_data.iloc[num_of_time_series-1:test_data.shape[0], 1])).tolist()
 benchmark.insert(0,initial_capital)
-SR_ptf = np.average(ptf_ret)/np.std(ptf_ret)*np.sqrt(252)
+ptf_volatility = np.std(ptf_ret)
+SR_ptf = np.average(ptf_ret)/ptf_volatility*np.sqrt(252)
 SR_mkt = np.average(test_data.iloc[num_of_time_series-1:test_data.shape[0], 1]) / np.std(test_data.iloc[num_of_time_series-1 :test_data.shape[0], 1]) * np.sqrt(252)
-print("Portfolio sharpe ratio = "+ str(SR_ptf))
-print("Market sharpe ratio = "+ str(SR_mkt))
-plt.plot(ptf_value,'-b',label = 'Portfolio')
+# Maximum draw down
+max_value = ptf_value[0]
+min_value = ptf_value[0]
+for i in range(len(ptf_value) - 1):
+    if(ptf_value[i+1] > max_value):
+        max_value = ptf_value[i+1]
+        min_value = ptf_value[i+1]
+    elif(ptf_value[i+1] < min_value):
+        min_value = ptf_value[i+1]
+
+MDD = (min_value - max_value)/max_value
+
+print("Strategy sharpe ratio = "+ "{:.4f}".format(SR_ptf))
+print("Strategy annualized volatility = "+ "{:.4f}".format(ptf_volatility*np.sqrt(252)))
+print("Strategy Maximum Drawdown = "+ "{:.4f}".format(MDD))
+print("Market sharpe ratio = "+ "{:.4f}".format(SR_mkt))
+
+
+
+
+
+plt.plot(ptf_value,'-b',label = 'Strategy')
 plt.plot(benchmark,'-r',label = 'Benchmark')
 plt.axis([0, test_data.shape[0],min(np.min(benchmark),np.min(ptf_value))*0.9,max(np.max(benchmark),np.max(ptf_value))*1.1])
-plt.ylabel('Cumulative portfolio value')
+plt.ylabel('Cumulative Strategy value')
 plt.xlabel('Time')
 plt.legend()
 plt.show()
-#
+
+#plot loss and accuracy curve
 # plt.plot(Minibatch_acc,label = 'Accuracy')
 # plt.plot(Minibatch_loss,label = 'Loss')
 # plt.ylabel('In-sample Accuracy/Loss Curve')
