@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 #set training and testing data period format = 'yyyy-mm-dd'
 train_date_end = '2000-12-31'
-test_data_start = '2001-01-01'
+test_data_start = '2000-02-01' # need to be date whereby the trading start date - batch_size
 test_data_end = '2001-12-31'
 
 
@@ -69,13 +69,12 @@ def getTrainingBatch_timeseries(batch_size, traindata):
 def getTestingBatch_timeseries(batch_size, testdata):
     real_return = testdata.iloc[-1, 1]
     testLabel = pd.DataFrame(data=np.zeros((batch_size, num_class)))
-
     testBatch = np.ndarray((batch_size, num_per_batch, num_of_time_series))
 
     for i in range(batch_size):
-        testBatch[i,] = (testdata.iloc[0:num_of_time_series, 2:testdata.shape[1]]).transpose()
-        testLabel.loc[i, 0] = np.int(real_return >= 0)
-        testLabel.loc[i, 1] = np.int(real_return < 0)
+        testBatch[i,] = (testdata.iloc[i:(i + num_of_time_series), 2:testdata.shape[1]]).transpose()
+        testLabel.loc[i, 0] = np.int(testdata.iloc[(i + num_of_time_series - 1), 1] >= 0)
+        testLabel.loc[i, 1] = np.int(testdata.iloc[(i + num_of_time_series - 1), 1] < 0)
 
     testBatch = testBatch.tolist()
 
@@ -124,7 +123,7 @@ prediction = LSTM(input_data,weight,bias)
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction,labels = labels))
 optimizer = tf.train.AdamOptimizer(1e-3).minimize(cost)
 correct_prediction = tf.equal(tf.argmax(prediction,1),tf.argmax(labels,1))
-prediction_results = tf.argmax(prediction,1)[0]
+prediction_results = tf.argmax(prediction,1)[-1]
 accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
 
 
@@ -158,9 +157,9 @@ with tf.Session() as sess:
     accuracy_counter = 0 #initialize overall accuracy
     # #testing data
     print("Testing starts!")
-    for step in range(test_data.shape[0] - num_of_time_series - 1):
+    for step in range(test_data.shape[0] - batch_size + 1):
 
-        nextTestBatch,nextTestBatchLabels,realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[step : step + num_of_time_series , :])
+        nextTestBatch,nextTestBatchLabels,realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[step : step + batch_size , :])
         #nextBatch = tf.unstack(nextBatch)
         sess.run(optimizer, feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
 
@@ -170,7 +169,7 @@ with tf.Session() as sess:
         else:
             action = "Sell"
 
-        date = test_data.iloc[step + num_of_time_series - 1,0]
+        date = test_data.iloc[step + batch_size - 1,0]
         adj_ret,net_position = getReturn(net_position,action,realize_return)
         ptf_value.append(adj_ret*ptf_value[step])
         ptf_ret.append(adj_ret-1)
@@ -189,7 +188,7 @@ with tf.Session() as sess:
 
 
 
-benchmark = (initial_capital * np.cumprod(1 + test_data.iloc[num_of_time_series-1:test_data.shape[0], 1])).tolist()
+benchmark = (initial_capital * np.cumprod(1 + test_data.iloc[batch_size-1:test_data.shape[0], 1])).tolist()
 benchmark.insert(0,initial_capital)
 ptf_volatility = np.std(ptf_ret)
 SR_ptf = np.average(ptf_ret)/ptf_volatility*np.sqrt(252)
@@ -210,8 +209,6 @@ print("Strategy sharpe ratio = "+ "{:.4f}".format(SR_ptf))
 print("Strategy annualized volatility = "+ "{:.4f}".format(ptf_volatility*np.sqrt(252)))
 print("Strategy Maximum Drawdown = "+ "{:.4f}".format(MDD))
 print("Market sharpe ratio = "+ "{:.4f}".format(SR_mkt))
-
-
 
 
 
