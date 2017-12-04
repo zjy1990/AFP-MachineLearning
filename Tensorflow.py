@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 
 
 #set training and testing data period format = 'yyyy-mm-dd'
-train_date_end = '2000-12-31'
-test_data_start = '2000-02-01' # need to be date whereby the trading start date - batch_size
-test_data_end = '2001-12-31'
+train_date_end = '2007-12-31'
+test_data_start = '2007-02-01' # need to be date whereby the trading start date - batch_size
+test_data_end = '2008-12-31'
 
 
 
@@ -182,7 +182,7 @@ with tf.Session() as sess:
         if (realize_return >= 0 and pred_result == 0) or  (realize_return < 0 and pred_result == 1):
             accuracy_counter += 1
         print(str(date) +" " + action +" : Cumulative Strategy value = " + str(ptf_value[step+1]))
-    overall_accuracy = accuracy_counter/(test_data.shape[0] - num_of_time_series - 1)
+    overall_accuracy = accuracy_counter/(test_data.shape[0] - batch_size + 1)
     print("Overall prediction accuracy: " + "{:.4f}".format(overall_accuracy))
     print("Testing Finished!")
 
@@ -214,7 +214,7 @@ print("Market sharpe ratio = "+ "{:.4f}".format(SR_mkt))
 
 plt.plot(ptf_value,'-b',label = 'Strategy')
 plt.plot(benchmark,'-r',label = 'Benchmark')
-plt.axis([0, test_data.shape[0],min(np.min(benchmark),np.min(ptf_value))*0.9,max(np.max(benchmark),np.max(ptf_value))*1.1])
+plt.axis([0, test_data.shape[0] - batch_size + 1,min(np.min(benchmark),np.min(ptf_value))*0.9,max(np.max(benchmark),np.max(ptf_value))*1.1])
 plt.ylabel('Cumulative Strategy value')
 plt.xlabel('Time')
 plt.legend()
