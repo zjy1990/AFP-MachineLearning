@@ -7,24 +7,23 @@ import matplotlib.pyplot as plt
 
 
 #set training and testing data period format = 'yyyy-mm-dd'
-train_date_start = '2000-01-01'
-train_date_end = '2007-12-31'
-test_data_start = '2007-02-01' # need to be date whereby the trading start date - batch_size
-test_data_end = '2008-12-31'
+train_date_start = '2007-01-01'
+train_date_end = '2014-12-31'
+test_data_start = '2015-01-01' # need to be date whereby the trading start date - batch_size
+test_data_end = '2015-12-31'
 
-
+batch_size = 240
 
 #Index
-raw_data = pd.read_csv('data\Index_data_stdized.csv',sep = ',')
+raw_data = pd.read_csv('data/Index_data_stdized.csv',sep = ',')
 train_data = raw_data[(raw_data.Date >= train_date_start)&(raw_data.Date <= train_date_end)]
-test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
+test_data = raw_data.iloc[(raw_data.index[raw_data['Date'] >= test_data_start])[0] - (batch_size - 1) : raw_data.index[raw_data['Date'] <= test_data_end][-1],:]
 #tech firm
 # raw_data = pd.read_csv('data/tech_stock.csv',sep = ',')
 # train_data = raw_data[raw_data.Date <= train_date_end]
 # test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
 
 #params
-batch_size = 240
 num_per_batch = train_data.shape[1] - 2
 num_of_time_series = 1
 num_class = 2
