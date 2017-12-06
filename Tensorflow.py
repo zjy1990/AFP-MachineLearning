@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 
 
 #set training and testing data period format = 'yyyy-mm-dd'
-train_date_end = '2010-12-31'
-test_data_start = '2011-01-01' # need to be date whereby the trading start date - batch_size
-test_data_end = '2011-12-31'
+train_date_end = '2008-12-31'
+test_data_start = '2009-01-01' # need to be date whereby the trading start date - batch_size
+test_data_end = '2009-12-31'
 
 
 batch_size = 240
@@ -112,7 +112,7 @@ input_data = tf.placeholder(tf.float32, [batch_size, num_per_batch, num_of_time_
 def LSTM(input_data,weight,bias):
     input_data = tf.unstack(input_data, axis = 1)
     lstmCell = tf.nn.rnn_cell.BasicLSTMCell(lstm_size)
-    lstmCell = tf.nn.rnn_cell.DropoutWrapper(cell=lstmCell, output_keep_prob=0.75)
+    lstmCell = tf.nn.rnn_cell.DropoutWrapper(cell=lstmCell, output_keep_prob=0.80)
     value, _ = tf.nn.static_rnn(lstmCell, input_data, dtype=tf.float32)
     value = tf.stack(value)
     last = tf.gather(value, int(value.get_shape()[0]) - 1) #take the last one
@@ -165,12 +165,12 @@ with tf.Session() as sess:
         pred_result = sess.run(prediction_results, feed_dict={input_data: nextTestBatch})
         sess.run(optimizer, feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
 
-        if step % 1 == 0:#report summary
-            # Calculate batch accuracy & loss
-            acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
-            print("Step " + str(step) + ", Minibatch Loss= " + \
-                  "{:.6f}".format(loss) + ", Training Accuracy= " + \
-                  "{:.5f}".format(acc))
+        # if step % 1 == 0:#report summary
+        #     # Calculate batch accuracy & loss
+        #     acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
+        #     print("Step " + str(step) + ", Minibatch Loss= " + \
+        #           "{:.6f}".format(loss) + ", Training Accuracy= " + \
+        #           "{:.5f}".format(acc))
 
         if pred_result == 0:
             action = "Buy"
@@ -200,18 +200,21 @@ benchmark = (initial_capital * np.cumprod(1 + test_data.iloc[batch_size-1:test_d
 benchmark.insert(0,initial_capital)
 ptf_volatility = np.std(ptf_ret)
 SR_ptf = np.average(ptf_ret)/ptf_volatility*np.sqrt(252)
-SR_mkt = np.average(test_data.iloc[num_of_time_series-1:test_data.shape[0], 1]) / np.std(test_data.iloc[num_of_time_series-1 :test_data.shape[0], 1]) * np.sqrt(252)
+SR_mkt = np.average(test_data.iloc[batch_size -1 :test_data.shape[0], 1]) / np.std(test_data.iloc[batch_size -1 :test_data.shape[0], 1]) * np.sqrt(252)
 # Maximum draw down
 max_value = ptf_value[0]
 min_value = ptf_value[0]
+MDD = 0
 for i in range(len(ptf_value) - 1):
     if(ptf_value[i+1] > max_value):
         max_value = ptf_value[i+1]
         min_value = ptf_value[i+1]
     elif(ptf_value[i+1] < min_value):
         min_value = ptf_value[i+1]
+    MDD_temp = (min_value - max_value) / max_value
+    if(MDD > MDD_temp):
+        MDD = MDD_temp
 
-MDD = (min_value - max_value)/max_value
 
 print("Strategy sharpe ratio = "+ "{:.4f}".format(SR_ptf))
 print("Strategy annualized volatility = "+ "{:.4f}".format(ptf_volatility*np.sqrt(252)))
@@ -236,3 +239,5 @@ plt.show()
 # #plt.axis([0,20,min(Minibatch_acc)*0.9,max(Minibatch_acc)*1.1])
 # plt.legend()
 # plt.show()
+
+np.savetxt("ptf_ret.csv", ptf_ret, delimiter=",", fmt='%s')
