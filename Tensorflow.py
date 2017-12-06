@@ -162,9 +162,10 @@ with tf.Session() as sess:
 
         nextTestBatch,nextTestBatchLabels,realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[step : step + num_of_time_series , :])
         #nextBatch = tf.unstack(nextBatch)
+        pred_result = sess.run(prediction_results, feed_dict={input_data: nextTestBatch})
         sess.run(optimizer, feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
 
-        pred_result = sess.run(prediction_results, feed_dict={input_data: nextTestBatch, labels:nextTestBatchLabels})
+        
         if pred_result == 0:
             action = "Buy"
         else:
