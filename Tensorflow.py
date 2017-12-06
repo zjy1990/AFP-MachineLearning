@@ -7,24 +7,23 @@ import matplotlib.pyplot as plt
 
 
 #set training and testing data period format = 'yyyy-mm-dd'
-train_date_start = '2000-01-01'
-train_date_end = '2007-12-31'
-test_data_start = '2007-02-01' # need to be date whereby the trading start date - batch_size
-test_data_end = '2008-12-31'
+train_date_end = '2010-12-31'
+test_data_start = '2011-01-01' # need to be date whereby the trading start date - batch_size
+test_data_end = '2011-12-31'
 
 
-
+batch_size = 240
 #Index
-raw_data = pd.read_csv('data\Index_data_stdized.csv',sep = ',')
-train_data = raw_data[(raw_data.Date >= train_date_start)&(raw_data.Date <= train_date_end)]
-test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
+raw_data = pd.read_csv('data/Index_data_stdized.csv',sep = ',')
+train_data = raw_data[raw_data.Date <= train_date_end]
+test_data = raw_data.iloc[(raw_data.index[raw_data['Date'] >= test_data_start])[0] - (batch_size - 1) : raw_data.index[raw_data['Date'] <= test_data_end][-1],:]
 #tech firm
 # raw_data = pd.read_csv('data/tech_stock.csv',sep = ',')
 # train_data = raw_data[raw_data.Date <= train_date_end]
 # test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
 
 #params
-batch_size = 240
+
 num_per_batch = train_data.shape[1] - 2
 num_of_time_series = 1
 num_class = 2
@@ -112,7 +111,7 @@ input_data = tf.placeholder(tf.float32, [batch_size, num_per_batch, num_of_time_
 def LSTM(input_data,weight,bias):
     input_data = tf.unstack(input_data, axis = 1)
     lstmCell = tf.nn.rnn_cell.BasicLSTMCell(lstm_size)
-    lstmCell = tf.nn.rnn_cell.DropoutWrapper(cell=lstmCell, output_keep_prob=0.85)
+    lstmCell = tf.nn.rnn_cell.DropoutWrapper(cell=lstmCell, output_keep_prob=0.75)
     value, _ = tf.nn.static_rnn(lstmCell, input_data, dtype=tf.float32)
     value = tf.stack(value)
     last = tf.gather(value, int(value.get_shape()[0]) - 1) #take the last one
@@ -162,9 +161,16 @@ with tf.Session() as sess:
 
         nextTestBatch,nextTestBatchLabels,realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[step : step + batch_size , :])
         #nextBatch = tf.unstack(nextBatch)
+        pred_result = sess.run(prediction_results, feed_dict={input_data: nextTestBatch})
         sess.run(optimizer, feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
 
-        pred_result = sess.run(prediction_results, feed_dict={input_data: nextTestBatch, labels:nextTestBatchLabels})
+        if step % 1 == 0:#report summary
+            # Calculate batch accuracy & loss
+            acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
+            print("Step " + str(step) + ", Minibatch Loss= " + \
+                  "{:.6f}".format(loss) + ", Training Accuracy= " + \
+                  "{:.5f}".format(acc))
+
         if pred_result == 0:
             action = "Buy"
         else:
