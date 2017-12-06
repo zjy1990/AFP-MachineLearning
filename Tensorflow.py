@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 
 
 #set training and testing data period format = 'yyyy-mm-dd'
-train_date_end = '2008-12-31'
-test_data_start = '2009-01-01' # need to be date whereby the trading start date - batch_size
-test_data_end = '2009-12-31'
+train_date_end = '2015-12-31'
+test_data_start = '2016-01-01' # need to be date whereby the trading start date - batch_size
+test_data_end = '2016-12-31'
 
 
 batch_size = 240
