@@ -7,14 +7,14 @@ import matplotlib.pyplot as plt
 
 
 #set training and testing data period format = 'yyyy-mm-dd'
-train_date_end = '2000-12-31'
-test_data_start = '2001-01-01'
-test_data_end = '2001-12-31'
+train_date_end = '2015-12-31'
+test_data_start = '2016-01-01'
+test_data_end = '2016-12-31'
 
 
 
 #Index
-raw_data = pd.read_csv('data\Index_data_stdized.csv',sep = ',')
+raw_data = pd.read_csv('data/Index_data_stdized.csv',sep = ',')
 train_data = raw_data[raw_data.Date <= train_date_end]
 test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
 #tech firm
@@ -122,7 +122,7 @@ def LSTM(input_data,weight,bias):
 prediction = LSTM(input_data,weight,bias)
 #define cost
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction,labels = labels))
-optimizer = tf.train.AdamOptimizer(1e-3).minimize(cost)
+optimizer = tf.train.AdamOptimizer(5e-4).minimize(cost)
 correct_prediction = tf.equal(tf.argmax(prediction,1),tf.argmax(labels,1))
 prediction_results = tf.argmax(prediction,1)[0]
 accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
@@ -164,8 +164,14 @@ with tf.Session() as sess:
         #nextBatch = tf.unstack(nextBatch)
         pred_result = sess.run(prediction_results, feed_dict={input_data: nextTestBatch})
         sess.run(optimizer, feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
+        if step % display_step == 0:#report summary
+            # Calculate batch accuracy & loss
+            acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
 
-        
+            print("Step " + str(step) + ", Minibatch Loss= " + \
+                  "{:.6f}".format(loss) + ", Training Accuracy= " + \
+                  "{:.5f}".format(acc))
+
         if pred_result == 0:
             action = "Buy"
         else:
