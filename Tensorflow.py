@@ -1,5 +1,3 @@
-
-
 import tensorflow as tf
 import numpy as np
 import pandas as pd
@@ -7,33 +5,36 @@ import matplotlib.pyplot as plt
 #import raw datam
 
 
-#financial
-# raw_data = pd.read_csv('data/fin_stock.csv',sep = ',')
-# train_data = raw_data.iloc[0:1511,]
-# test_data = raw_data.iloc[1481:1761,]
+#set training and testing data period format = 'yyyy-mm-dd'
+train_date_end = '1994-12-31'
+test_data_start = '1995-01-01' # need to be date whereby the trading start date - batch_size
+test_data_end = '1995-12-31'
+
+
+batch_size = 240
 
 #Index
-# raw_data = pd.read_csv('data/IDX_sp500_only1.csv',sep = ',')
-# train_data = raw_data.iloc[0:5000,]
-# test_data = raw_data.iloc[5200:5600,]
+raw_data = pd.read_csv('data/Index_data_stdized.csv',sep = ',')
+train_data = raw_data[raw_data.Date <= train_date_end]
+test_data = raw_data.iloc[(raw_data.index[raw_data['Date'] >= test_data_start])[0] - (batch_size - 1) : raw_data.index[raw_data['Date'] <= test_data_end][-1],:]
 #tech firm
-raw_data = pd.read_csv('data/GOOG.csv',sep = ',')
-train_data = raw_data.iloc[0:35000,]
-test_data = raw_data.iloc[35000:36645,]
+# raw_data = pd.read_csv('data/tech_stock.csv',sep = ',')
+# train_data = raw_data[raw_data.Date <= train_date_end]
+# test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
+
+
 #params
-batch_size = 100
 num_per_batch = train_data.shape[1] - 2
-num_of_time_series = 100
+num_of_time_series = 1
 num_class = 4
-lstm_size = 64
-num_iteration = 2000
-#num_iteration = train_data.shape[0] - batch_size + 1
+lstm_size = 100
+num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
-target_buy = 0.00001
-target_sell = -0.00001
-trans_cost = 0.000
-borrow_rate = 0.000
+target_buy = 0.003
+target_sell = -0.003
+trans_cost = 0.0010
+borrow_rate = 0.0002
 initial_capital = 100
 ptf_value = []
 ptf_value.append(initial_capital)
@@ -56,19 +57,33 @@ def getTrainingBatch_random(batch_size, traindata):
     trainBatch = trainBatch.tolist()
     return(trainBatch,trainLabel)
 
+def getTrainingBatch_timeseries(batch_size, traindata):
+    trainBatch = np.ndarray((batch_size, num_per_batch, num_of_time_series))
+    trainLabel = pd.DataFrame(data=np.zeros((batch_size, num_class)))
+
+    for i in range(batch_size):
+        trainBatch[i,] = (traindata.iloc[i:(i + num_of_time_series), 2:traindata.shape[1]]).transpose()
+        trainLabel.loc[i, 0] = np.int(traindata.iloc[(i + num_of_time_series - 1), 1] >= target_buy)
+        trainLabel.loc[i, 1] = np.int((traindata.iloc[(i + num_of_time_series - 1), 1] < target_buy) & (traindata.iloc[(i + num_of_time_series - 1), 1] >= 0))
+        trainLabel.loc[i, 2] = np.int((traindata.iloc[(i + num_of_time_series - 1), 1] < 0) & (traindata.iloc[(i + num_of_time_series - 1), 1] >=target_sell))
+        trainLabel.loc[i, 3] = np.int(traindata.iloc[(i + num_of_time_series - 1), 1] < target_sell)
+
+    trainBatch = trainBatch.tolist()
+
+    return(trainBatch,trainLabel)
 
 def getTestingBatch_timeseries(batch_size, testdata):
     real_return = testdata.iloc[-1, 1]
     testLabel = pd.DataFrame(data=np.zeros((batch_size, num_class)))
-
     testBatch = np.ndarray((batch_size, num_per_batch, num_of_time_series))
 
     for i in range(batch_size):
-        testBatch[i,] = (testdata.iloc[0:num_of_time_series, 2:traindata.shape[1]]).transpose()
-        testLabel.loc[i, 0] = np.int(real_return >= target_buy)
-        testLabel.loc[i, 1] = np.int((real_return < target_buy) & (real_return >= 0))
-        testLabel.loc[i, 2] = np.int((real_return < 0) & (real_return >= target_sell))
-        testLabel.loc[i, 3] = np.int(real_return < target_sell)
+        testBatch[i,] = (testdata.iloc[i:(i + num_of_time_series), 2:testdata.shape[1]]).transpose()
+        testLabel.loc[i, 0] = np.int(testLabel.iloc[(i + num_of_time_series - 1), 1] >= target_buy)
+        testLabel.loc[i, 1] = np.int((testLabel.iloc[(i + num_of_time_series - 1), 1] < target_buy) & (testLabel.iloc[(i + num_of_time_series - 1), 1] >= 0))
+        testLabel.loc[i, 2] = np.int((testLabel.iloc[(i + num_of_time_series - 1), 1] < 0) & (testLabel.iloc[(i + num_of_time_series - 1), 1] >=target_sell))
+        testLabel.loc[i, 3] = np.int(testLabel.iloc[(i + num_of_time_series - 1), 1] < target_sell)
+
 
     testBatch = testBatch.tolist()
 
@@ -133,7 +148,7 @@ input_data = tf.placeholder(tf.float32, [batch_size, num_per_batch, num_of_time_
 def LSTM(input_data,weight,bias):
     input_data = tf.unstack(input_data, axis = 1)
     lstmCell = tf.nn.rnn_cell.BasicLSTMCell(lstm_size)
-    lstmCell = tf.nn.rnn_cell.DropoutWrapper(cell=lstmCell, output_keep_prob=0.85)
+    lstmCell = tf.nn.rnn_cell.DropoutWrapper(cell=lstmCell, output_keep_prob=0.80)
     value, _ = tf.nn.static_rnn(lstmCell, input_data, dtype=tf.float32)
     value = tf.stack(value)
     last = tf.gather(value, int(value.get_shape()[0]) - 1) #take the last one
@@ -143,7 +158,7 @@ def LSTM(input_data,weight,bias):
 prediction = LSTM(input_data,weight,bias)
 #define cost
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction,labels = labels))
-optimizer = tf.train.AdamOptimizer(1e-4).minimize(cost)
+optimizer = tf.train.AdamOptimizer(1e-3).minimize(cost)
 correct_prediction = tf.equal(tf.argmax(prediction,1),tf.argmax(labels,1))
 prediction_results = tf.argmax(prediction,1)[0]
 accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
@@ -157,9 +172,8 @@ with tf.Session() as sess:
 #run model random time series
     print("Optimization Starts!")
     for step in range(num_iteration):
-        #traindata = train_data.iloc[step:step+batch_size,:]
-        traindata =train_data
-        nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_random(batch_size,traindata)
+        traindata = train_data.iloc[step:step + batch_size, :]
+        nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_timeseries(batch_size,traindata)
         #nextBatch = tf.unstack(nextBatch)
         sess.run(optimizer,feed_dict= {input_data: nextTrainBatch,labels: nextTrainBatchLabels})
         if step % display_step == 0:#report summary
@@ -172,14 +186,16 @@ with tf.Session() as sess:
     print("Optimization Finished!")
 
     net_position = 0 #initialize action
+    accuracy_counter = 0  # initialize overall accuracy
     # #testing data
-    for step in range(test_data.shape[0] - num_of_time_series - 1):
+    for step in range(test_data.shape[0] - batch_size + 1):
 
-        nextTestBatch,nextTestBatchLabels,realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[step : step + num_of_time_series , :])
+        nextTestBatch, nextTestBatchLabels, realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[
+                                                                                                    step: step + batch_size,
+                                                                                                    :])
         #nextBatch = tf.unstack(nextBatch)
+        pred_result = sess.run(prediction_results, feed_dict={input_data: nextTestBatch})
         sess.run(optimizer, feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
-
-        pred_result = sess.run(prediction_results, feed_dict={input_data: nextTestBatch, labels:nextTestBatchLabels})
 
         if pred_result == 0:
             action = "Buy"
@@ -190,31 +206,56 @@ with tf.Session() as sess:
         else:
             action = "Sell"
 
-        date = test_data.iloc[step + num_of_time_series+1,0]
+        date = test_data.iloc[step + batch_size - 1, 0]
         adj_ret,net_position = getReturn(net_position,action,realize_return)
         ptf_value.append(adj_ret*ptf_value[step])
         ptf_ret.append(adj_ret-1)
-        print(str(date) +" " + action +" : Cumulative portfolio value = " + str(ptf_value[step+1]) + " " + str(realize_return))
-
             # Calculate batch accuracy & loss
         # acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
         # print("Minibatch Loss= " + \
         #           "{:.6f}".format(loss) + ", Training Accuracy= " + \
         #           "{:.5f}".format(acc))
+        if (realize_return >= 0 and pred_result == 0) or (realize_return < 0 and pred_result == 1):
+            accuracy_counter += 1
+        print(str(date) + " " + action + " : Cumulative Strategy value = " + str(ptf_value[step + 1]))
 
+    overall_accuracy = accuracy_counter / (test_data.shape[0] - batch_size + 1)
+    print("Overall prediction accuracy: " + "{:.4f}".format(overall_accuracy))
     print("Testing Finished!")
 
 
 
-benchmark = (initial_capital * np.cumprod(1 + test_data.iloc[num_of_time_series-1:test_data.shape[0], 1])).tolist()
-SR_ptf = np.average(ptf_ret)/np.std(ptf_ret)*np.sqrt(252)
-SR_mkt = np.average(test_data.iloc[num_of_time_series:test_data.shape[0], 1]) / np.std(test_data.iloc[num_of_time_series:test_data.shape[0], 1]) * np.sqrt(252)
-print("Portfolio sharpe ratio = "+ str(SR_ptf))
-print("Market sharpe ratio = "+ str(SR_mkt))
-plt.plot(ptf_value,'-b',label = 'Portfolio')
+benchmark = (initial_capital * np.cumprod(1 + test_data.iloc[batch_size-1:test_data.shape[0], 1])).tolist()
+benchmark.insert(0,initial_capital)
+ptf_volatility = np.std(ptf_ret)
+SR_ptf = np.average(ptf_ret)/ptf_volatility*np.sqrt(252)
+SR_mkt = np.average(test_data.iloc[batch_size -1 :test_data.shape[0], 1]) / np.std(test_data.iloc[batch_size -1 :test_data.shape[0], 1]) * np.sqrt(252)
+# Maximum draw down
+max_value = ptf_value[0]
+min_value = ptf_value[0]
+MDD = 0
+for i in range(len(ptf_value) - 1):
+    if(ptf_value[i+1] > max_value):
+        max_value = ptf_value[i+1]
+        min_value = ptf_value[i+1]
+    elif(ptf_value[i+1] < min_value):
+        min_value = ptf_value[i+1]
+    MDD_temp = (min_value - max_value) / max_value
+    if(MDD > MDD_temp):
+        MDD = MDD_temp
+
+
+print("Strategy sharpe ratio = "+ "{:.4f}".format(SR_ptf))
+print("Strategy annualized volatility = "+ "{:.4f}".format(ptf_volatility*np.sqrt(252)))
+print("Strategy Maximum Drawdown = "+ "{:.4f}".format(MDD))
+print("Market sharpe ratio = "+ "{:.4f}".format(SR_mkt))
+
+
+
+plt.plot(ptf_value,'-b',label = 'Strategy')
 plt.plot(benchmark,'-r',label = 'Benchmark')
-plt.axis([0, test_data.shape[0],np.min(ptf_value)*0.9,np.max(ptf_value)*1.1])
-plt.ylabel('Cumulative portfolio value')
+plt.axis([0, test_data.shape[0] - batch_size + 1,min(np.min(benchmark),np.min(ptf_value))*0.9,max(np.max(benchmark),np.max(ptf_value))*1.1])
+plt.ylabel('Cumulative Strategy value')
 plt.xlabel('Time')
 plt.legend()
 plt.show()
