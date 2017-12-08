@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="3f75087e-9f41-4e10-9c05-46fcf59aa577" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/IDX_sp500_only1.csv" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Tensorflow.py" afterPath="$PROJECT_DIR$/Tensorflow.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/AAPL.csv" afterPath="$PROJECT_DIR$/data/AAPL.csv" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/IDX_sp500_only.csv" afterPath="$PROJECT_DIR$/data/IDX_sp500_only.csv" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/fin_stock.csv" afterPath="$PROJECT_DIR$/data/fin_stock.csv" />
-    </list>
+    <list default="true" id="3f75087e-9f41-4e10-9c05-46fcf59aa577" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -21,8 +14,8 @@
       <file leaf-file-name="Tensorflow.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Tensorflow.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="262">
-              <caret line="75" column="38" lean-forward="true" selection-start-line="75" selection-start-column="38" selection-end-line="75" selection-end-column="38" />
+            <state relative-caret-position="1463">
+              <caret line="77" column="51" lean-forward="false" selection-start-line="77" selection-start-column="51" selection-end-line="77" selection-end-column="51" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
               </folding>
@@ -618,8 +611,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Tensorflow.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="262">
-          <caret line="75" column="38" lean-forward="true" selection-start-line="75" selection-start-column="38" selection-end-line="75" selection-end-column="38" />
+        <state relative-caret-position="1463">
+          <caret line="77" column="51" lean-forward="false" selection-start-line="77" selection-start-column="51" selection-end-line="77" selection-end-column="51" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
           </folding>
