@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 #import raw datam
 
 #set training and testing data period format = 'yyyy-mm-dd'
-train_date_end = '2007-12-31'
-test_data_start = '2008-01-01'
-test_data_end = '2008-12-31'
+train_date_end = '1992-12-31'
+test_data_start = '1993-01-01'
+test_data_end = '1993-2-31'
 
 
 
@@ -80,10 +80,10 @@ def getTestingBatch_timeseries(batch_size, testdata):
 
     for i in range(batch_size):
         testBatch[i,] = (testdata.iloc[i:(i + num_of_time_series), 2:testdata.shape[1]]).transpose()
-        testLabel.loc[i, 0] = np.int(testLabel.iloc[(i + num_of_time_series - 1), 1] >= target_buy)
-        testLabel.loc[i, 1] = np.int((testLabel.iloc[(i + num_of_time_series - 1), 1] < target_buy) & (testLabel.iloc[(i + num_of_time_series - 1), 1] >= 0))
-        testLabel.loc[i, 2] = np.int((testLabel.iloc[(i + num_of_time_series - 1), 1] < 0) & (testLabel.iloc[(i + num_of_time_series - 1), 1] >=target_sell))
-        testLabel.loc[i, 3] = np.int(testLabel.iloc[(i + num_of_time_series - 1), 1] < target_sell)
+        testLabel.loc[i, 0] = np.int(testdata.iloc[(i + num_of_time_series - 1), 1] >= target_buy)
+        testLabel.loc[i, 1] = np.int((testdata.iloc[(i + num_of_time_series - 1), 1] < target_buy) & (testdata.iloc[(i + num_of_time_series - 1), 1] >= 0))
+        testLabel.loc[i, 2] = np.int((testdata.iloc[(i + num_of_time_series - 1), 1] < 0) & (testdata.iloc[(i + num_of_time_series - 1), 1] >=target_sell))
+        testLabel.loc[i, 3] = np.int(testdata.iloc[(i + num_of_time_series - 1), 1] < target_sell)
 
     testBatch = testBatch.tolist()
     return(testBatch,testLabel,real_return)
@@ -159,7 +159,7 @@ prediction = LSTM(input_data,weight,bias)
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction,labels = labels))
 optimizer = tf.train.AdamOptimizer(1e-3).minimize(cost)
 correct_prediction = tf.equal(tf.argmax(prediction,1),tf.argmax(labels,1))
-prediction_results = tf.argmax(prediction,1)[0]
+prediction_results = tf.argmax(prediction,1)[-1]
 accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
 
 
@@ -189,9 +189,7 @@ with tf.Session() as sess:
     # #testing data
     for step in range(test_data.shape[0] - batch_size + 1):
 
-        nextTestBatch, nextTestBatchLabels, realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[
-                                                                                                    step: step + batch_size,
-                                                                                                    :])
+        nextTestBatch, nextTestBatchLabels, realize_return = getTestingBatch_timeseries(batch_size, test_data.iloc[step: step + batch_size, :])
         #nextBatch = tf.unstack(nextBatch)
         pred_result = sess.run(prediction_results, feed_dict={input_data: nextTestBatch})
         sess.run(optimizer, feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
@@ -209,10 +207,6 @@ with tf.Session() as sess:
         adj_ret,net_position = getReturn(net_position,action,realize_return)
         ptf_value.append(adj_ret*ptf_value[step])
         ptf_ret.append(adj_ret-1)
-        date = test_data.iloc[step + num_of_time_series,0]
-        adj_ret,net_position = getReturn(net_position,action,realize_return)
-        ptf_value.append(adj_ret*ptf_value[step])
-        ptf_ret.append(adj_ret-1)
         print(str(date) +" " + action +" : Cumulative portfolio value = " + str(ptf_value[step+1]))
 
             # Calculate batch accuracy & loss
@@ -220,12 +214,11 @@ with tf.Session() as sess:
         # print("Minibatch Loss= " + \
         #           "{:.6f}".format(loss) + ", Training Accuracy= " + \
         #           "{:.5f}".format(acc))
-        if (realize_return >= 0 and pred_result == 0) or (realize_return < 0 and pred_result == 1):
-            accuracy_counter += 1
-        print(str(date) + " " + action + " : Cumulative Strategy value = " + str(ptf_value[step + 1]))
-
-    overall_accuracy = accuracy_counter / (test_data.shape[0] - batch_size + 1)
-    print("Overall prediction accuracy: " + "{:.4f}".format(overall_accuracy))
+    #     if (realize_return >= 0 and pred_result == 0) or (realize_return < 0 and pred_result == 1):
+    #         accuracy_counter += 1
+    #
+    # overall_accuracy = accuracy_counter / (test_data.shape[0] - batch_size + 1)
+    #print("Overall prediction accuracy: " + "{:.4f}".format(overall_accuracy))
     print("Testing Finished!")
 
 
@@ -261,8 +254,6 @@ plt.plot(ptf_value,'-b',label = 'Strategy')
 plt.plot(benchmark,'-r',label = 'Benchmark')
 plt.axis([0, test_data.shape[0] - batch_size + 1,min(np.min(benchmark),np.min(ptf_value))*0.9,max(np.max(benchmark),np.max(ptf_value))*1.1])
 plt.ylabel('Cumulative Strategy value')
-plt.axis([0, test_data.shape[0],min(np.min(benchmark),np.min(ptf_value))*0.9,max(np.max(benchmark),np.max(ptf_value))*1.1])
-plt.ylabel('Cumulative portfolio value')
 plt.xlabel('Time')
 plt.legend()
 plt.show()
