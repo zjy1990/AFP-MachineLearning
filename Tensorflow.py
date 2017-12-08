@@ -10,12 +10,6 @@ test_data_start = '2008-01-01'
 test_data_end = '2008-12-31'
 
 
-<<<<<<< HEAD
-#set training and testing data period format = 'yyyy-mm-dd'
-train_date_end = '1994-12-31'
-test_data_start = '1995-01-01' # need to be date whereby the trading start date - batch_size
-test_data_end = '1995-12-31'
-
 
 batch_size = 240
 
@@ -28,37 +22,18 @@ test_data = raw_data.iloc[(raw_data.index[raw_data['Date'] >= test_data_start])[
 # train_data = raw_data[raw_data.Date <= train_date_end]
 # test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
 
-
 #params
-=======
-
-#Index
-raw_data = pd.read_csv('data/IDX_non_lag_asian_&_stock.csv',sep = ',')
-train_data = raw_data[raw_data.Date <= train_date_end]
-test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
-
-
-#params
-batch_size = 240
->>>>>>> d306bd69d087d920577a4daa379b0f0a81edca5d
 num_per_batch = train_data.shape[1] - 2
 num_of_time_series = 1
 num_class = 4
 lstm_size = 100
-<<<<<<< HEAD
-=======
 #num_iteration = 2500
->>>>>>> d306bd69d087d920577a4daa379b0f0a81edca5d
 num_iteration = train_data.shape[0] - batch_size + 1
 display_step = batch_size
 #strategy params
 target_buy = 0.003
 target_sell = -0.003
-<<<<<<< HEAD
-trans_cost = 0.0010
-=======
 trans_cost = 0.001
->>>>>>> d306bd69d087d920577a4daa379b0f0a81edca5d
 borrow_rate = 0.0002
 initial_capital = 100
 ptf_value = []
@@ -90,21 +65,13 @@ def getTrainingBatch_timeseries(batch_size, traindata):
         trainBatch[i,] = (traindata.iloc[i:(i + num_of_time_series), 2:traindata.shape[1]]).transpose()
         trainLabel.loc[i, 0] = np.int(traindata.iloc[(i + num_of_time_series - 1), 1] >= target_buy)
         trainLabel.loc[i, 1] = np.int((traindata.iloc[(i + num_of_time_series - 1), 1] < target_buy) & (traindata.iloc[(i + num_of_time_series - 1), 1] >= 0))
-<<<<<<< HEAD
         trainLabel.loc[i, 2] = np.int((traindata.iloc[(i + num_of_time_series - 1), 1] < 0) & (traindata.iloc[(i + num_of_time_series - 1), 1] >=target_sell))
         trainLabel.loc[i, 3] = np.int(traindata.iloc[(i + num_of_time_series - 1), 1] < target_sell)
 
     trainBatch = trainBatch.tolist()
 
     return(trainBatch,trainLabel)
-=======
-        trainLabel.loc[i, 2] = np.int((traindata.iloc[(i + num_of_time_series - 1), 1] < 0) & (traindata.iloc[(i + num_of_time_series - 1), 1] >= target_sell))
-        trainLabel.loc[i, 3] = np.int(traindata.iloc[(i + num_of_time_series - 1), 1] < target_sell)
 
-    trainBatch = trainBatch.tolist()
-    return(trainBatch,trainLabel)
-
->>>>>>> d306bd69d087d920577a4daa379b0f0a81edca5d
 
 def getTestingBatch_timeseries(batch_size, testdata):
     real_return = testdata.iloc[-1, 1]
@@ -118,9 +85,7 @@ def getTestingBatch_timeseries(batch_size, testdata):
         testLabel.loc[i, 2] = np.int((testLabel.iloc[(i + num_of_time_series - 1), 1] < 0) & (testLabel.iloc[(i + num_of_time_series - 1), 1] >=target_sell))
         testLabel.loc[i, 3] = np.int(testLabel.iloc[(i + num_of_time_series - 1), 1] < target_sell)
 
-
     testBatch = testBatch.tolist()
-
     return(testBatch,testLabel,real_return)
 
 def getReturn(net_position, action, actual_return):
@@ -206,12 +171,7 @@ with tf.Session() as sess:
 #run model random time series
     print("Optimization Starts!")
     for step in range(num_iteration):
-<<<<<<< HEAD
         traindata = train_data.iloc[step:step + batch_size, :]
-=======
-        #traindata = train_data.iloc[step:step+batch_size,:]
-        traindata =train_data
->>>>>>> d306bd69d087d920577a4daa379b0f0a81edca5d
         nextTrainBatch,nextTrainBatchLabels = getTrainingBatch_timeseries(batch_size,traindata)
         #nextBatch = tf.unstack(nextBatch)
         sess.run(optimizer,feed_dict= {input_data: nextTrainBatch,labels: nextTrainBatchLabels})
@@ -245,36 +205,26 @@ with tf.Session() as sess:
         else:
             action = "Sell"
 
-<<<<<<< HEAD
         date = test_data.iloc[step + batch_size - 1, 0]
         adj_ret,net_position = getReturn(net_position,action,realize_return)
         ptf_value.append(adj_ret*ptf_value[step])
         ptf_ret.append(adj_ret-1)
-=======
         date = test_data.iloc[step + num_of_time_series,0]
         adj_ret,net_position = getReturn(net_position,action,realize_return)
         ptf_value.append(adj_ret*ptf_value[step])
         ptf_ret.append(adj_ret-1)
         print(str(date) +" " + action +" : Cumulative portfolio value = " + str(ptf_value[step+1]))
 
->>>>>>> d306bd69d087d920577a4daa379b0f0a81edca5d
             # Calculate batch accuracy & loss
         # acc, loss = sess.run([accuracy, cost], feed_dict={input_data: nextTestBatch, labels: nextTestBatchLabels})
         # print("Minibatch Loss= " + \
         #           "{:.6f}".format(loss) + ", Training Accuracy= " + \
         #           "{:.5f}".format(acc))
-<<<<<<< HEAD
         if (realize_return >= 0 and pred_result == 0) or (realize_return < 0 and pred_result == 1):
             accuracy_counter += 1
         print(str(date) + " " + action + " : Cumulative Strategy value = " + str(ptf_value[step + 1]))
 
     overall_accuracy = accuracy_counter / (test_data.shape[0] - batch_size + 1)
-=======
-        if (realize_return >= target_buy and pred_result == 0) or (realize_return < target_sell and pred_result == 3):
-            accuracy_counter += 1
-        print(str(date) + " " + action + " : Cumulative portfolio value = " + str(ptf_value[step + 1]))
-        overall_accuracy = accuracy_counter / (test_data.shape[0] - num_of_time_series - 1)
->>>>>>> d306bd69d087d920577a4daa379b0f0a81edca5d
     print("Overall prediction accuracy: " + "{:.4f}".format(overall_accuracy))
     print("Testing Finished!")
 
@@ -309,13 +259,10 @@ print("Market sharpe ratio = "+ "{:.4f}".format(SR_mkt))
 
 plt.plot(ptf_value,'-b',label = 'Strategy')
 plt.plot(benchmark,'-r',label = 'Benchmark')
-<<<<<<< HEAD
 plt.axis([0, test_data.shape[0] - batch_size + 1,min(np.min(benchmark),np.min(ptf_value))*0.9,max(np.max(benchmark),np.max(ptf_value))*1.1])
 plt.ylabel('Cumulative Strategy value')
-=======
 plt.axis([0, test_data.shape[0],min(np.min(benchmark),np.min(ptf_value))*0.9,max(np.max(benchmark),np.max(ptf_value))*1.1])
 plt.ylabel('Cumulative portfolio value')
->>>>>>> d306bd69d087d920577a4daa379b0f0a81edca5d
 plt.xlabel('Time')
 plt.legend()
 plt.show()
