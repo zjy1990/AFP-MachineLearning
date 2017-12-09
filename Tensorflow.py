@@ -15,7 +15,7 @@ test_data_end = '2016-12-31'
 batch_size = 240
 
 #Index
-raw_data = pd.read_csv('data/Index_data_stdized.csv',sep = ',')
+raw_data = pd.read_csv('data/fin_stock_stdized.csv',sep = ',')
 train_data = raw_data[raw_data.Date <= train_date_end]
 test_data = raw_data.iloc[(raw_data.index[raw_data['Date'] >= test_data_start])[0] - (batch_size - 1) : raw_data.index[raw_data['Date'] <= test_data_end][-1],:]
 #tech firm
@@ -24,6 +24,7 @@ test_data = raw_data.iloc[(raw_data.index[raw_data['Date'] >= test_data_start])[
 # test_data = raw_data[(raw_data.Date >= test_data_start)&(raw_data.Date <= test_data_end)]
 
 #params
+
 
 num_per_batch = train_data.shape[1] - 2
 num_of_time_series = 1
